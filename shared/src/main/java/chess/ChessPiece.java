@@ -312,7 +312,7 @@ public class ChessPiece {
     public Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
         List<ChessMove> moves = new ArrayList<>();
         ChessPiece piece = board.getPiece(myPosition);
-        ChessPiece newPiece = null;
+        ChessPiece newPiece;
         int i = myPosition.getRow() + 1;
 
         // Upward movement for Rook
@@ -579,7 +579,10 @@ public class ChessPiece {
     }
 
     public Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
-        return List.of();
+        Collection<ChessMove> moves = rookMoves(board, myPosition);
+        moves.addAll(bishopMoves(board, myPosition));
+
+        return moves;
     }
 
     public Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
