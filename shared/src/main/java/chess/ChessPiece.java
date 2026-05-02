@@ -310,11 +310,87 @@ public class ChessPiece {
     }
 
     public Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
-        return List.of();
+        List<ChessMove> moves = new ArrayList<>();
+        ChessPiece piece = board.getPiece(myPosition);
+        ChessPiece newPiece = null;
+        int i = myPosition.getRow() + 1;
+
+        // Upward movement for Rook
+        if (i < 9) {
+            newPiece = board.getPiece(new ChessPosition(i, myPosition.getColumn()));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(i, myPosition.getColumn()),
+                        null
+                ));
+                i++;
+                if (newPiece != null || i == 9) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(i, myPosition.getColumn()));
+            }
+        }
+
+        // Downward movement for Rook
+        i = myPosition.getRow() - 1;
+        if (i > 0) {
+            newPiece = board.getPiece(new ChessPosition(i, myPosition.getColumn()));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(i, myPosition.getColumn()),
+                        null
+                ));
+                i--;
+                if (newPiece != null || i == 0) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(i, myPosition.getColumn()));
+            }
+        }
+
+        // Rightward movement for Rook
+        i = myPosition.getColumn() + 1;
+        if (i < 9) {
+            newPiece = board.getPiece(new ChessPosition(myPosition.getRow(), i));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(myPosition.getRow(), i),
+                        null
+                ));
+                i++;
+                if (newPiece != null || i == 9) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(myPosition.getRow(), i));
+            }
+        }
+
+        // Leftward movement for Rook
+        i = myPosition.getColumn() - 1;
+        if (i > 0) {
+            newPiece = board.getPiece(new ChessPosition(myPosition.getRow(), i));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(myPosition.getRow(), i),
+                        null
+                ));
+                i--;
+                if (newPiece != null || i == 0) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(myPosition.getRow(), i));
+            }
+        }
+
+        return moves;
     }
 
     public Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
-        return List.of(new ChessMove(new ChessPosition(5,4), new ChessPosition(1,8), null));
+        return List.of();
     }
 
     public Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
