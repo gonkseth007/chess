@@ -390,7 +390,91 @@ public class ChessPiece {
     }
 
     public Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
-        return List.of();
+        List<ChessMove> moves = new ArrayList<>();
+        ChessPiece piece = board.getPiece(myPosition);
+        ChessPiece newPiece;
+        int i = myPosition.getRow() + 1;
+        int j = myPosition.getColumn() - 1;
+
+        // Up-left diagonal movement for bishop
+        if (i < 9 && j > 0) {
+            newPiece = board.getPiece(new ChessPosition(i, j));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(i, j),
+                        null
+                ));
+                i++;
+                j--;
+                if (newPiece != null || i == 9 || j == 0) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(i, j));
+            }
+        }
+
+        // Up-right diagonal movement for bishop
+        i = myPosition.getRow() + 1;
+        j = myPosition.getColumn() + 1;
+        if (i < 9 && j < 9) {
+            newPiece = board.getPiece(new ChessPosition(i, j));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(i, j),
+                        null
+                ));
+                i++;
+                j++;
+                if (newPiece != null || i == 9 || j == 9) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(i, j));
+            }
+        }
+
+        // Down-right movement for Bishop
+        i = myPosition.getRow() - 1;
+        j = myPosition.getColumn() + 1;
+        if (i > 0 && j < 9) {
+            newPiece = board.getPiece(new ChessPosition(i, j));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(i, j),
+                        null
+                ));
+                i--;
+                j++;
+                if (newPiece != null || i == 0 || j == 9) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(i, j));
+            }
+        }
+
+        // Down-right movement for Bishop
+        i = myPosition.getRow() - 1;
+        j = myPosition.getColumn() - 1;
+        if (i > 0 && j > 0) {
+            newPiece = board.getPiece(new ChessPosition(i, j));
+            while (newPiece == null || newPiece.getTeamColor() != piece.getTeamColor()) {
+                moves.add(new ChessMove(
+                        myPosition,
+                        new ChessPosition(i, j),
+                        null
+                ));
+                i--;
+                j--;
+                if (newPiece != null || i == 0 || j == 0) {
+                    break;
+                }
+                newPiece = board.getPiece(new ChessPosition(i, j));
+            }
+        }
+
+        return moves;
     }
 
     public Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
