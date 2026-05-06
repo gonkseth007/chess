@@ -1,6 +1,8 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -44,6 +46,39 @@ public class ChessBoard {
      */
     public ChessPiece getPiece(ChessPosition position) {
         return squares[position.getRow()-1][position.getColumn()-1];
+    }
+
+    /**
+     * Returns all the chess pieces
+     *
+     */
+    public List<ChessPiece> getAllPieces() {
+        List<ChessPiece> pieces = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (squares[i][j] != null) {
+                    pieces.add(squares[i][j]);
+                }
+            }
+        }
+        return pieces;
+    }
+
+    /**
+     * Returns all the start positions for chess pieces
+     *
+     */
+    public List<ChessPosition> getAllStartPositions() {
+        List<ChessPiece> pieces = new ArrayList<>();
+        List<ChessPosition> positions = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (squares[i][j] != null) {
+                    positions.add(new ChessPosition(i,j));
+                }
+            }
+        }
+        return positions;
     }
 
     @Override
