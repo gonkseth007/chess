@@ -13,7 +13,7 @@ public class ChessBoard {
 
     ChessPiece[][] squares = new ChessPiece[8][8];
     public ChessBoard() {
-//        resetBoard();
+
     }
 
     /**
@@ -24,6 +24,15 @@ public class ChessBoard {
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
         squares[position.getRow()-1][position.getColumn()-1] = piece;
+    }
+
+    /**
+     * Removes a chess piece from the chessboard
+     *
+     * @param position where to remove the piece
+     */
+    public void removePiece(ChessPosition position) {
+        squares[position.getRow()-1][position.getColumn()-1] = null;
     }
 
     /**

@@ -111,4 +111,18 @@ public class ChessGame {
     public ChessBoard getBoard() {
         return board;
     }
+
+    private ChessPiece movePiece(ChessMove move) {
+        ChessPiece movedPiece = board.getPiece(move.getStartPosition());
+        ChessPiece takenPiece = board.getPiece(move.getEndPosition());
+        board.addPiece(move.getEndPosition(),movedPiece);
+        board.removePiece(move.getStartPosition());
+        return takenPiece;
+    }
+
+    private void undoMove(ChessMove move, ChessPiece takenPiece) {
+        ChessPiece movedPiece = board.getPiece(move.getEndPosition());
+        board.addPiece(move.getStartPosition(),movedPiece);
+        board.addPiece(move.getEndPosition(),takenPiece);
+    }
 }
