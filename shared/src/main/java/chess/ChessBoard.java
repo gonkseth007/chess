@@ -52,11 +52,11 @@ public class ChessBoard {
      * Returns all the chess pieces
      *
      */
-    public List<ChessPiece> getAllPieces() {
+    public List<ChessPiece> getAllTeamPieces(ChessGame.TeamColor team) {
         List<ChessPiece> pieces = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (squares[i][j] != null) {
+                if (squares[i][j] != null && squares[i][j].getTeamColor() == team) {
                     pieces.add(squares[i][j]);
                 }
             }
@@ -68,13 +68,13 @@ public class ChessBoard {
      * Returns all the start positions for chess pieces
      *
      */
-    public List<ChessPosition> getAllStartPositions() {
+    public List<ChessPosition> getAllTeamStartPositions(ChessGame.TeamColor team) {
         List<ChessPiece> pieces = new ArrayList<>();
         List<ChessPosition> positions = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (squares[i][j] != null) {
-                    positions.add(new ChessPosition(i,j));
+                if (squares[i][j] != null && squares[i][j].getTeamColor() == team) {
+                    positions.add(new ChessPosition(i+1,j+1));
                 }
             }
         }

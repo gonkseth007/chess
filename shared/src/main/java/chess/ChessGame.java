@@ -84,9 +84,32 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPiece kingPiece = getKingPiece(teamColor);
-        if (kingPiece != null) {
-            return true;
+        int[] kingP = getKingPiece(teamColor);
+        TeamColor opponentTeam;
+        if (teamColor == TeamColor.BLACK) {
+            opponentTeam = TeamColor.WHITE;
+        } else {
+            opponentTeam = TeamColor.BLACK;
+        }
+        if (kingP != null) {
+            ChessPosition kingPos = new ChessPosition(kingP[0], kingP[1]);
+            List<ChessPiece> pieces = board.getAllTeamPieces(opponentTeam);
+            List<ChessPosition> positions = board.getAllTeamStartPositions(opponentTeam);
+            List<Collection<ChessMove>> moves = new ArrayList<>();
+            for (int i = 0; i < pieces.size(); i++) {
+                ChessPiece piece = pieces.get(i);
+                ChessPosition position = positions.get(i);
+                moves.add(piece.pieceMoves(board, position));
+            }
+            for (Collection<ChessMove> pieceMoves : moves) {
+                for (ChessMove move : pieceMoves) {
+                    int row = move.getEndPosition().getRow();
+                    int col = move.getEndPosition().getColumn();
+                    if (row == kingPos.getRow() && col == kingPos.getColumn()) {
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
@@ -130,7 +153,7 @@ public class ChessGame {
         return board;
     }
 
-    private ChessPiece getKingPiece(TeamColor teamColor) {
+    private int[] getKingPiece(TeamColor teamColor) {
         ChessPiece kingPiece;
         for (int i = 1; i < 9; i++) {
             for (int j = 1; j < 9; j++) {
@@ -139,7 +162,7 @@ public class ChessGame {
                         j
                 ));
                 if (kingPiece != null && kingPiece.getPieceType() == ChessPiece.PieceType.KING && kingPiece.getTeamColor() == teamColor) {
-                    return kingPiece;
+                    return new int[]{i, j};
                 }
             }
         }
