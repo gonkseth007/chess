@@ -3,6 +3,7 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A class that can manage a chess game, making moves on a board
@@ -58,11 +59,10 @@ public class ChessGame {
         List<ChessMove> newMoves = new ArrayList<>();
         for (ChessMove move : moves) {
             ChessPiece takenPiece = movePiece(move);
-            if (isInCheck(piece.getTeamColor())) {
-                undoMove(move, takenPiece);
-            } else {
+            if (!isInCheck(piece.getTeamColor())) {
                 newMoves.add(move);
             }
+            undoMove(move, takenPiece);
         }
         return newMoves;
     }
@@ -105,6 +105,9 @@ public class ChessGame {
                 for (ChessMove move : pieceMoves) {
                     int row = move.getEndPosition().getRow();
                     int col = move.getEndPosition().getColumn();
+                    // System.out.printf("[%d,%d]", row, col);
+                    // System.out.printf("[%d,%d]", kingPos.getRow(), kingPos.getColumn());
+                    // System.out.println();
                     if (row == kingPos.getRow() && col == kingPos.getColumn()) {
                         return true;
                     }
