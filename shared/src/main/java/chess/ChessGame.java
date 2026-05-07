@@ -93,14 +93,7 @@ public class ChessGame {
         }
         if (kingP != null) {
             ChessPosition kingPos = new ChessPosition(kingP[0], kingP[1]);
-            List<ChessPiece> pieces = board.getAllTeamPieces(opponentTeam);
-            List<ChessPosition> positions = board.getAllTeamStartPositions(opponentTeam);
-            List<Collection<ChessMove>> moves = new ArrayList<>();
-            for (int i = 0; i < pieces.size(); i++) {
-                ChessPiece piece = pieces.get(i);
-                ChessPosition position = positions.get(i);
-                moves.add(piece.pieceMoves(board, position));
-            }
+            List<Collection<ChessMove>> moves = getTeamMoves(teamColor);
             for (Collection<ChessMove> pieceMoves : moves) {
                 for (ChessMove move : pieceMoves) {
                     int row = move.getEndPosition().getRow();
@@ -154,6 +147,29 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    private boolean noValidMoves(TeamColor teamColor) {
+        List<ChessPosition> positions = board.getAllTeamStartPositions(teamColor);
+
+        for (ChessPosition position : positions) {
+            if (!validMoves(position).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<Collection<ChessMove>> getTeamMoves(TeamColor teamColor) {
+        List<ChessPiece> pieces = board.getAllTeamPieces(teamColor);
+        List<ChessPosition> positions = board.getAllTeamStartPositions(teamColor);
+        List<Collection<ChessMove>> moves = new ArrayList<>();
+        for (int i = 0; i < pieces.size(); i++) {
+            ChessPiece piece = pieces.get(i);
+            ChessPosition position = positions.get(i);
+            moves.add(piece.pieceMoves(board, position));
+        }
+        return moves;
     }
 
     private int[] getKingPiece(TeamColor teamColor) {
