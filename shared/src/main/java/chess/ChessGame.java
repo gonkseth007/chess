@@ -13,10 +13,10 @@ import java.util.Objects;
  */
 public class ChessGame {
 
-    private TeamColor teamTurn;
+    private TeamColor teamTurn = TeamColor.WHITE;
     private ChessBoard board = new ChessBoard();
     public ChessGame() {
-
+        board.resetBoard();
     }
 
     /**
@@ -131,10 +131,7 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        if (isInCheck(teamColor) && noValidMoves(teamColor)) {
-                return true;
-        }
-        return false;
+        return isInCheck(teamColor) && noValidMoves(teamColor);
     }
 
     /**
@@ -145,10 +142,7 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        if (!isInCheck(teamColor) && noValidMoves(teamColor)) {
-            return true;
-        }
-        return false;
+        return !isInCheck(teamColor) && noValidMoves(teamColor);
     }
 
     /**
@@ -167,6 +161,20 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame chessGame = (ChessGame) o;
+        return teamTurn == chessGame.teamTurn && Objects.equals(board, chessGame.board);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(teamTurn, board);
     }
 
     public void changeTeamTurn() {
