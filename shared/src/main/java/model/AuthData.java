@@ -1,8 +1,6 @@
 package model;
 
-import chess.ChessGame;
-
-record AuthData(String username, String authToken) {}
+public record AuthData(String username, String authToken) {}
 
 //public class AuthData {
 //    private String username;
