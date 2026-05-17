@@ -4,21 +4,22 @@ import com.google.gson.Gson;
 import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import model.RegisterRequest;
+import model.LoginRequest;
 import model.RegisterLoginResult;
+import model.RegisterRequest;
 import service.UserService;
 
-public class RegisterHandler implements Handler {
+public class LoginHandler implements Handler {
     UserService service;
-    public RegisterHandler(UserService uService) {
+    public LoginHandler(UserService uService) {
         this.service = uService;
     }
 
     public void handle(Context context) throws DataAccessException {
         String body = context.body();
         Gson gson = new Gson();
-        RegisterRequest request = gson.fromJson(body, RegisterRequest.class);
-        RegisterLoginResult result = service.register(request);
+        LoginRequest request = gson.fromJson(body, LoginRequest.class);
+        RegisterLoginResult result = service.login(request);
         String res = gson.toJson(result);
 
         context.status(200);

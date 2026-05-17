@@ -7,8 +7,6 @@ import dataaccess.DataAccessException;
 
 import java.util.UUID;
 
-import static service.AuthService.generateAuthToken;
-
 public class UserService {
     private final UserDataAccess uDataAccess;
     private final AuthDataAccess aDataAccess;
@@ -18,7 +16,7 @@ public class UserService {
         this.aDataAccess = auth;
     }
 
-    public RegisterResult register(RegisterRequest registerRequest) throws DataAccessException {
+    public RegisterLoginResult register(RegisterRequest registerRequest) throws DataAccessException {
         uDataAccess.insertUser(new UserData(
                 registerRequest.username(),
                 registerRequest.password(),
@@ -28,8 +26,20 @@ public class UserService {
                 registerRequest.username(),
                 token
         ));
-        return new RegisterResult(registerRequest.username(), token);
+        return new RegisterLoginResult(registerRequest.username(), token);
     }
+
+    public RegisterLoginResult login(LoginRequest loginRequest) throws DataAccessException {
+        UserData user = uDataAccess.getUser(loginRequest.username());
+        String token = generateAuthToken();
+        aDataAccess.insertAuth(new AuthData(
+                loginRequest.username(),
+                token
+        ));
+        return new RegisterLoginResult(user.username(), token);
+    }
+
+
 
     public static String generateAuthToken() {
         return UUID.randomUUID().toString();

@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
+import handler.LoginHandler;
 import handler.RegisterHandler;
 import io.javalin.*;
 import io.javalin.http.Context;
@@ -25,7 +26,6 @@ public class Server {
 
         javalin.exception(Exception.class, this::exceptionHandler);
         javalin.error(404, this::notFound);
-
     }
 
     public int run(int desiredPort) {
@@ -39,6 +39,7 @@ public class Server {
 
     private void createHandlers() {
         javalin.post("/user", new RegisterHandler(uService));
+        javalin.post("/session", new LoginHandler(uService));
     }
 
     private void exceptionHandler(Exception e, Context context) {
