@@ -2,10 +2,13 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
+import handler.ClearHandler;
 import handler.LoginHandler;
+import handler.LogoutHandler;
 import handler.RegisterHandler;
 import io.javalin.*;
 import io.javalin.http.Context;
+import service.ClearService;
 import service.UserService;
 
 import java.util.Map;
@@ -14,6 +17,7 @@ public class Server {
 
     private final Javalin javalin;
     private final UserService uService;
+    private final ClearService cService;
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
@@ -21,7 +25,9 @@ public class Server {
         // Register your endpoints and exception handlers here.
         UserDataAccess userDAO = new MemoryUserDataAccess();
         AuthDataAccess authDAO = new MemoryAuthDataAccess();
+        GameDataAccess gameDAO = new MemoryGameDataAccess();
         uService = new UserService(userDAO, authDAO);
+        cService = new ClearService(authDAO, userDAO, gameDAO);
         createHandlers();
 
         javalin.exception(Exception.class, this::exceptionHandler);
@@ -40,6 +46,8 @@ public class Server {
     private void createHandlers() {
         javalin.post("/user", new RegisterHandler(uService));
         javalin.post("/session", new LoginHandler(uService));
+        javalin.delete("/session", new LogoutHandler(uService));
+        javalin.delete("/db", new ClearHandler(cService));
     }
 
     private void exceptionHandler(Exception e, Context context) {

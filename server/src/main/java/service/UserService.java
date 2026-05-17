@@ -39,7 +39,10 @@ public class UserService {
         return new RegisterLoginResult(user.username(), token);
     }
 
-
+    public void logout(String token) throws DataAccessException {
+        AuthData auth = aDataAccess.getAuth(token);
+        aDataAccess.deleteAuth(auth);
+    }
 
     public static String generateAuthToken() {
         return UUID.randomUUID().toString();
