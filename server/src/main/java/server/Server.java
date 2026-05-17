@@ -2,13 +2,11 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
-import handler.ClearHandler;
-import handler.LoginHandler;
-import handler.LogoutHandler;
-import handler.RegisterHandler;
+import handler.*;
 import io.javalin.*;
 import io.javalin.http.Context;
 import service.ClearService;
+import service.GameService;
 import service.UserService;
 
 import java.util.Map;
@@ -18,6 +16,7 @@ public class Server {
     private final Javalin javalin;
     private final UserService uService;
     private final ClearService cService;
+    private final GameService gService;
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
@@ -28,6 +27,7 @@ public class Server {
         GameDataAccess gameDAO = new MemoryGameDataAccess();
         uService = new UserService(userDAO, authDAO);
         cService = new ClearService(authDAO, userDAO, gameDAO);
+        gService = new GameService(authDAO, gameDAO);
         createHandlers();
 
         javalin.exception(Exception.class, this::exceptionHandler);
@@ -47,6 +47,7 @@ public class Server {
         javalin.post("/user", new RegisterHandler(uService));
         javalin.post("/session", new LoginHandler(uService));
         javalin.delete("/session", new LogoutHandler(uService));
+        javalin.post("/game", new CreateGameHandler(gService));
         javalin.delete("/db", new ClearHandler(cService));
     }
 

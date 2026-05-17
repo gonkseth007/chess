@@ -3,7 +3,7 @@ package dataaccess;
 import model.GameData;
 
 public interface GameDataAccess {
-    void createGame(GameData data) throws DataAccessException;
+    GameData createGame(String gameName) throws DataAccessException;
 
     GameData getGame(Integer gameID) throws DataAccessException;
 
