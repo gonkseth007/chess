@@ -14,4 +14,8 @@ public class MemoryUserDataAccess implements UserDataAccess {
     public UserData getUser(String username) {
         return users.get(username);
     }
+
+    public void deleteAllUsers() {
+        users.clear();
+    }
 }
