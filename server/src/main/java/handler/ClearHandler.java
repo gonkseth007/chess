@@ -13,7 +13,8 @@ public class ClearHandler implements Handler {
     }
 
     public void handle(Context context) throws DataAccessException {
-        service.clearDatabase();
+        String token = context.header("authorization");
+        service.clearDatabase(token);
         context.status(200);
         context.contentType("application/json");
         context.result(String.valueOf(new JsonObject()));

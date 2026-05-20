@@ -1,9 +1,6 @@
 package service;
 
-import dataaccess.AuthDataAccess;
-import dataaccess.DataAccessException;
-import dataaccess.GameDataAccess;
-import dataaccess.UserDataAccess;
+import dataaccess.*;
 
 public class ClearService {
 
@@ -17,9 +14,12 @@ public class ClearService {
         this.gDataAccess = game;
     }
 
-    public void clearDatabase() throws DataAccessException {
+    public void clearDatabase(String token) throws DataAccessException {
+//        if (aDataAccess.getAuth(token) == null) {
+//            throw new AuthorizationException();
+//        }
+        gDataAccess.deleteAllGames();
         aDataAccess.deleteAllAuths();
         uDataAccess.deleteAllUsers();
-        gDataAccess.deleteAllGames();
     }
 }

@@ -1,5 +1,6 @@
 package service;
 
+import dataaccess.AuthorizationException;
 import dataaccess.UserDataAccess;
 import dataaccess.AuthDataAccess;
 import model.*;
@@ -41,6 +42,9 @@ public class UserService {
 
     public void logout(String token) throws DataAccessException {
         AuthData auth = aDataAccess.getAuth(token);
+        if (auth == null) {
+            throw new AuthorizationException();
+        }
         aDataAccess.deleteAuth(auth);
     }
 

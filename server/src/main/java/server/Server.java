@@ -30,6 +30,7 @@ public class Server {
         gService = new GameService(authDAO, gameDAO);
         createHandlers();
 
+        javalin.exception(AuthorizationException.class, this::authorizationExceptionHandler);
         javalin.exception(Exception.class, this::exceptionHandler);
         javalin.error(404, this::notFound);
     }
@@ -48,7 +49,15 @@ public class Server {
         javalin.post("/session", new LoginHandler(uService));
         javalin.delete("/session", new LogoutHandler(uService));
         javalin.post("/game", new CreateGameHandler(gService));
+        javalin.put("/game", new JoinGameHandler(gService));
+        javalin.get("/game", new ListGamesHandler(gService));
         javalin.delete("/db", new ClearHandler(cService));
+    }
+
+    private void authorizationExceptionHandler(Exception e, Context context) {
+        var body = new Gson().toJson(Map.of("message", "Error: bad request"));
+        context.status(401);
+        context.json(body);
     }
 
     private void exceptionHandler(Exception e, Context context) {
