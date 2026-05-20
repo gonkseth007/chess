@@ -30,7 +30,9 @@ public class Server {
         gService = new GameService(authDAO, gameDAO);
         createHandlers();
 
+        javalin.exception(BadRequestException.class, this::badRequestExceptionHandler);
         javalin.exception(AuthorizationException.class, this::authorizationExceptionHandler);
+        javalin.exception(AlreadyTakenException.class, this::alreadyTakenExceptionHandler);
         javalin.exception(Exception.class, this::exceptionHandler);
         javalin.error(404, this::notFound);
     }
@@ -54,9 +56,21 @@ public class Server {
         javalin.delete("/db", new ClearHandler(cService));
     }
 
-    private void authorizationExceptionHandler(Exception e, Context context) {
+    private void badRequestExceptionHandler(Exception e, Context context) {
         var body = new Gson().toJson(Map.of("message", "Error: bad request"));
+        context.status(400);
+        context.json(body);
+    }
+
+    private void authorizationExceptionHandler(Exception e, Context context) {
+        var body = new Gson().toJson(Map.of("message", "Error: unauthorized"));
         context.status(401);
+        context.json(body);
+    }
+
+    private void alreadyTakenExceptionHandler(Exception e, Context context) {
+        var body = new Gson().toJson(Map.of("message", "Error: already taken"));
+        context.status(403);
         context.json(body);
     }
 

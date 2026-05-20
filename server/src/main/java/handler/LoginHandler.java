@@ -6,7 +6,6 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import model.LoginRequest;
 import model.RegisterLoginResult;
-import model.RegisterRequest;
 import service.UserService;
 
 public class LoginHandler implements Handler {
@@ -24,7 +23,6 @@ public class LoginHandler implements Handler {
 
         context.status(200);
         context.contentType("application/json");
-//        context.header("CS240", "Awesome!");
         context.result(res);
     }
 }

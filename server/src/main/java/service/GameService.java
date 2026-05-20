@@ -20,6 +20,9 @@ public class GameService {
         if (aDataAccess.getAuth(request.authToken()) == null) {
             throw new AuthorizationException();
         }
+        if (request.gameName() == null) {
+            throw new BadRequestException();
+        }
         GameData game = gDataAccess.createGame(request.gameName());
         return new CreateGameResult(game.gameID());
     }
@@ -31,14 +34,19 @@ public class GameService {
         if (data == null) {
             throw new AuthorizationException();
         }
-
         GameData game = gDataAccess.getGame(request.gameID());
+
+        if ((!Objects.equals(request.playerColor(), "WHITE") && !Objects.equals(request.playerColor(), "BLACK")) || game == null) {
+            throw new BadRequestException();
+        }
         if (Objects.equals(request.playerColor(), "WHITE") && game.whiteUsername() == null) {
             GameData newGame = new GameData(game.gameID(),data.username(),game.blackUsername(),game.gameName(),game.game());
             gDataAccess.updateGame(newGame);
         } else if (Objects.equals(request.playerColor(), "BLACK") && game.blackUsername() == null) {
             GameData newGame = new GameData(game.gameID(),game.whiteUsername(),data.username(),game.gameName(),game.game());
             gDataAccess.updateGame(newGame);
+        } else {
+            throw new AlreadyTakenException();
         }
 //        throw new DataAccessException;
     }

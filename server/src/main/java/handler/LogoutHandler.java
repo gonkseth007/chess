@@ -14,7 +14,6 @@ public class LogoutHandler implements Handler {
 
     public void handle(Context context) throws DataAccessException {
         String token = context.header("authorization");
-        System.out.println(token);
         service.logout(token);
         context.status(200);
         context.contentType("application/json");

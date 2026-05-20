@@ -1,11 +1,9 @@
 package service;
 
-import dataaccess.AuthorizationException;
-import dataaccess.UserDataAccess;
-import dataaccess.AuthDataAccess;
+import dataaccess.*;
 import model.*;
-import dataaccess.DataAccessException;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class UserService {
@@ -17,24 +15,39 @@ public class UserService {
         this.aDataAccess = auth;
     }
 
-    public RegisterLoginResult register(RegisterRequest registerRequest) throws DataAccessException {
+    public RegisterLoginResult register(RegisterRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null || request.email() == null) {
+            throw new BadRequestException();
+        }
+        if (uDataAccess.getUser(request.username()) != null) {
+            throw new AlreadyTakenException();
+        }
         uDataAccess.insertUser(new UserData(
-                registerRequest.username(),
-                registerRequest.password(),
-                registerRequest.email()));
+                request.username(),
+                request.password(),
+                request.email()));
         String token = generateAuthToken();
         aDataAccess.insertAuth(new AuthData(
-                registerRequest.username(),
+                request.username(),
                 token
         ));
-        return new RegisterLoginResult(registerRequest.username(), token);
+        return new RegisterLoginResult(request.username(), token);
     }
 
-    public RegisterLoginResult login(LoginRequest loginRequest) throws DataAccessException {
-        UserData user = uDataAccess.getUser(loginRequest.username());
+    public RegisterLoginResult login(LoginRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null) {
+            throw new BadRequestException();
+        }
+        UserData user = uDataAccess.getUser(request.username());
+        if (user == null) {
+            throw new AuthorizationException();
+        }
+        if (!Objects.equals(user.password(), request.password())) {
+            throw new AuthorizationException();
+        }
         String token = generateAuthToken();
         aDataAccess.insertAuth(new AuthData(
-                loginRequest.username(),
+                request.username(),
                 token
         ));
         return new RegisterLoginResult(user.username(), token);
@@ -51,6 +64,4 @@ public class UserService {
     public static String generateAuthToken() {
         return UUID.randomUUID().toString();
     }
-//    public LoginResult login(LoginRequest loginRequest) {}
-//    public void logout(LogoutRequest logoutRequest) {}
 }
