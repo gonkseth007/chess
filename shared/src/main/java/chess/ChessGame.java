@@ -112,9 +112,6 @@ public class ChessGame {
                 for (ChessMove move : pieceMoves) {
                     int row = move.getEndPosition().getRow();
                     int col = move.getEndPosition().getColumn();
-                    // System.out.printf("[%d,%d]", row, col);
-                    // System.out.printf("[%d,%d]", kingPos.getRow(), kingPos.getColumn());
-                    // System.out.println();
                     if (row == kingPos.getRow() && col == kingPos.getColumn()) {
                         return true;
                     }
