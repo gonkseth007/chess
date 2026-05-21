@@ -3,7 +3,7 @@ package service;
 import dataaccess.*;
 import model.*;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 public class GameService {
@@ -28,8 +28,6 @@ public class GameService {
     }
 
     public void joinGame(JoinGameRequest request) throws DataAccessException {
-        System.out.print("auth token is ");
-        System.out.println(request.authToken());
         AuthData data = aDataAccess.getAuth(request.authToken());
         if (data == null) {
             throw new AuthorizationException();
@@ -48,14 +46,13 @@ public class GameService {
         } else {
             throw new AlreadyTakenException();
         }
-//        throw new DataAccessException;
     }
 
     public ListGamesResult listGames(String token) throws DataAccessException {
         if (aDataAccess.getAuth(token) == null) {
             throw new AuthorizationException();
         }
-        Collection<GameData> games = gDataAccess.getAllGames();
+        List<GameData> games = gDataAccess.getAllGames();
         return new ListGamesResult(games);
     }
 }

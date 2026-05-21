@@ -14,10 +14,7 @@ public class ClearService {
         this.gDataAccess = game;
     }
 
-    public void clearDatabase(String token) throws DataAccessException {
-//        if (aDataAccess.getAuth(token) == null) {
-//            throw new AuthorizationException();
-//        }
+    public void clearDatabase() throws DataAccessException {
         gDataAccess.deleteAllGames();
         aDataAccess.deleteAllAuths();
         uDataAccess.deleteAllUsers();

@@ -3,8 +3,9 @@ package dataaccess;
 import chess.ChessGame;
 import model.GameData;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class MemoryGameDataAccess implements GameDataAccess {
     private int nextId = 1;
@@ -20,17 +21,14 @@ public class MemoryGameDataAccess implements GameDataAccess {
         return games.get(gameID);
     }
 
-    public Collection<GameData> getAllGames() { return games.values(); }
+    public List<GameData> getAllGames() { return new ArrayList<>(games.values()); }
 
     public void updateGame(GameData game) {
         games.put(game.gameID(), game);
     }
 
-    public void deleteGame(GameData data) {
-
-    }
-
     public void deleteAllGames() {
         games.clear();
+        nextId = 1;
     }
 }
