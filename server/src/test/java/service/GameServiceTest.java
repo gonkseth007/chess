@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class GameServiceTest {
@@ -22,7 +24,7 @@ class GameServiceTest {
     }
 
     @BeforeEach
-    public void setup() throws DataAccessException {
+    public void setup() throws DataAccessException, SQLException {
         new ClearService(authDAO, new MemoryUserDataAccess(), gameDAO).clearDatabase();
         authDAO.insertAuth(new AuthData("gonkgonk", "auth1234"));
         authDAO.insertAuth(new AuthData("jamesbond", "auth5678"));

@@ -22,7 +22,7 @@ public class Server {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
         // Register your endpoints and exception handlers here.
-        UserDataAccess userDAO = new MemoryUserDataAccess();
+        UserDataAccess userDAO = new MySqlUserDataAccess();
         AuthDataAccess authDAO = new MemoryAuthDataAccess();
         GameDataAccess gameDAO = new MemoryGameDataAccess();
         uService = new UserService(userDAO, authDAO);

@@ -6,13 +6,15 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import service.ClearService;
 
+import java.sql.SQLException;
+
 public class ClearHandler implements Handler {
     ClearService service;
     public ClearHandler(ClearService cService) {
         this.service = cService;
     }
 
-    public void handle(Context context) throws DataAccessException {
+    public void handle(Context context) throws DataAccessException, SQLException {
         service.clearDatabase();
         context.status(200);
         context.contentType("application/json");

@@ -2,6 +2,8 @@ package service;
 
 import dataaccess.*;
 
+import java.sql.SQLException;
+
 public class ClearService {
 
     private final AuthDataAccess aDataAccess;
@@ -14,7 +16,7 @@ public class ClearService {
         this.gDataAccess = game;
     }
 
-    public void clearDatabase() throws DataAccessException {
+    public void clearDatabase() throws DataAccessException, SQLException {
         gDataAccess.deleteAllGames();
         aDataAccess.deleteAllAuths();
         uDataAccess.deleteAllUsers();

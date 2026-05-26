@@ -4,6 +4,8 @@ import dataaccess.*;
 import model.*;
 import org.junit.jupiter.api.*;
 
+import java.sql.SQLException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
@@ -19,13 +21,13 @@ class UserServiceTest {
     }
 
     @BeforeEach
-    public void setup() throws DataAccessException {
+    public void setup() throws DataAccessException, SQLException {
         new ClearService(authDAO, userDAO, new MemoryGameDataAccess()).clearDatabase();
     }
 
     @Test
     @DisplayName("Successfully Register User")
-    void registerUserSuccess() throws DataAccessException {
+    void registerUserSuccess() throws DataAccessException, SQLException {
         RegisterLoginResult result = service.register(new RegisterRequest("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         assertEquals("gonk@gonk.edu", userDAO.getUser("gonkdroid007").email());
         assertEquals("gonkdroid007", authDAO.getAuth(result.authToken()).username());
@@ -33,7 +35,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Fail to Register User")
-    void registerUserFail() throws DataAccessException {
+    void registerUserFail() throws DataAccessException, SQLException {
         service.register(new RegisterRequest("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         assertThrows(AlreadyTakenException.class, () -> service.register(new RegisterRequest("gonkdroid007", "password", "gonkgonk@gonk.edu")));
         assertThrows(BadRequestException.class, () -> service.register(new RegisterRequest(null, "lamepassword", "gonk@gonk.edu")));
@@ -41,7 +43,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Successfully Login User")
-    void loginUserSuccess() throws DataAccessException {
+    void loginUserSuccess() throws DataAccessException, SQLException {
         service.register(new RegisterRequest("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         RegisterLoginResult result = service.login(new LoginRequest("gonkdroid007", "starwarsiscool"));
         assertEquals("gonkdroid007", result.username());
@@ -50,7 +52,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Fail to Login User")
-    void loginUserFail() throws DataAccessException {
+    void loginUserFail() throws DataAccessException, SQLException {
         service.register(new RegisterRequest("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         assertThrows(AuthorizationException.class, () -> service.login(new LoginRequest("gonkdroid007", "iknowmypasswordtrust")));
         assertThrows(BadRequestException.class, () -> service.login(new LoginRequest(null, "lamepassword")));
@@ -58,7 +60,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Successfully Logout User")
-    void logoutUserSuccess() throws DataAccessException {
+    void logoutUserSuccess() throws DataAccessException, SQLException {
         service.register(new RegisterRequest("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         RegisterLoginResult result = service.login(new LoginRequest("gonkdroid007", "starwarsiscool"));
         assertEquals("gonkdroid007", authDAO.getAuth(result.authToken()).username());
@@ -68,7 +70,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Fail to Logout User")
-    void logoutUserFail() throws DataAccessException {
+    void logoutUserFail() throws DataAccessException, SQLException {
         service.register(new RegisterRequest("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         assertThrows(AuthorizationException.class, () -> service.logout("thisistotallyarealAuthToken"));
         RegisterLoginResult result = service.login(new LoginRequest("gonkdroid007", "starwarsiscool"));
