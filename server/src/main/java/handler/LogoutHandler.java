@@ -6,13 +6,15 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import service.UserService;
 
+import java.sql.SQLException;
+
 public class LogoutHandler implements Handler {
     UserService service;
     public LogoutHandler(UserService uService) {
         this.service = uService;
     }
 
-    public void handle(Context context) throws DataAccessException {
+    public void handle(Context context) throws DataAccessException, SQLException {
         String token = context.header("authorization");
         service.logout(token);
         context.status(200);

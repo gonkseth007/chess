@@ -54,7 +54,7 @@ public class UserService {
         return new RegisterLoginResult(user.username(), token);
     }
 
-    public void logout(String token) throws DataAccessException {
+    public void logout(String token) throws DataAccessException, SQLException {
         AuthData auth = aDataAccess.getAuth(token);
         if (auth == null) {
             throw new AuthorizationException();

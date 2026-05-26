@@ -8,6 +8,8 @@ import model.CreateGameRequest;
 import model.CreateGameResult;
 import service.GameService;
 
+import java.sql.SQLException;
+
 
 public class CreateGameHandler implements Handler {
     GameService service;
@@ -15,7 +17,7 @@ public class CreateGameHandler implements Handler {
         this.service = gService;
     }
 
-    public void handle(Context context) throws DataAccessException {
+    public void handle(Context context) throws DataAccessException, SQLException {
         String body = context.body();
         String token = context.header("authorization");
         Gson gson = new Gson();

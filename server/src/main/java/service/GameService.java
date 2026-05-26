@@ -3,6 +3,7 @@ package service;
 import dataaccess.*;
 import model.*;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 
@@ -16,7 +17,7 @@ public class GameService {
         this.gDataAccess = game;
     }
 
-    public CreateGameResult createGame(CreateGameRequest request) throws DataAccessException {
+    public CreateGameResult createGame(CreateGameRequest request) throws DataAccessException, SQLException {
         if (aDataAccess.getAuth(request.authToken()) == null) {
             throw new AuthorizationException();
         }
@@ -27,7 +28,7 @@ public class GameService {
         return new CreateGameResult(game.gameID());
     }
 
-    public void joinGame(JoinGameRequest request) throws DataAccessException {
+    public void joinGame(JoinGameRequest request) throws DataAccessException, SQLException {
         AuthData data = aDataAccess.getAuth(request.authToken());
         if (data == null) {
             throw new AuthorizationException();
@@ -48,7 +49,7 @@ public class GameService {
         }
     }
 
-    public ListGamesResult listGames(String token) throws DataAccessException {
+    public ListGamesResult listGames(String token) throws DataAccessException, SQLException {
         if (aDataAccess.getAuth(token) == null) {
             throw new AuthorizationException();
         }

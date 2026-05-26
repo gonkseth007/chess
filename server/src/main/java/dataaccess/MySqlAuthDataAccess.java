@@ -1,14 +1,14 @@
 package dataaccess;
 
-import com.google.gson.Gson;
+import model.AuthData;
 import model.UserData;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
-public class MySqlUserDataAccess implements UserDataAccess {
-    public MySqlUserDataAccess() {
+public class MySqlAuthDataAccess implements AuthDataAccess {
+    public MySqlAuthDataAccess() {
         try {
 //            System.out.println("about to configure the database...");
             configureDatabase();
@@ -17,21 +17,22 @@ public class MySqlUserDataAccess implements UserDataAccess {
         }
     }
 
-    public void insertUser(UserData u) throws DataAccessException, SQLException {
-        var statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+
+    public void insertAuth(AuthData auth) throws DataAccessException, SQLException {
+        var statement = "INSERT INTO auths (username, authToken) VALUES (?, ?)";
 //        var json = new Gson().toJson(u);
-        executeUpdate(statement, u.username(), u.password(), u.email());
+        executeUpdate(statement, auth.username(), auth.authToken());
     }
 
-    public UserData getUser(String username) throws DataAccessException, SQLException {
+    public AuthData getAuth(String token) throws DataAccessException, SQLException {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT username, password, email FROM users WHERE username=?";
+            var statement = "SELECT username, authToken FROM auths WHERE token=?";
             try (var ps = conn.prepareStatement(statement)) {
-                ps.setString(1, username);
+                ps.setString(1, token);
                 try (var rs = ps.executeQuery()) {
                     if (rs.next()) {
 //                        var json = rs.getString("json");
-                        return readUser(rs);
+                        return readAuth(rs);
                     }
                 }
             }
@@ -41,19 +42,23 @@ public class MySqlUserDataAccess implements UserDataAccess {
         return null;
     }
 
-    public void deleteAllUsers() throws DataAccessException, SQLException {
-        var statement = "TRUNCATE users";
-        executeUpdate(statement);
-
+    public void deleteAuth(AuthData auth) throws DataAccessException, SQLException {
+        var statement = "DELETE FROM auths WHERE authToken=?";
+        executeUpdate(statement, auth.authToken());
     }
 
-    private UserData readUser(ResultSet rs) throws SQLException {
+    public void deleteAllAuths() throws DataAccessException, SQLException {
+        var statement = "TRUNCATE auths";
+        executeUpdate(statement);
+    }
+
+
+    private AuthData readAuth(ResultSet rs) throws SQLException {
         var username = rs.getString("username");
-        var password = rs.getString("password");
-        var email = rs.getString("email");
+        var token = rs.getString("authToken");
 //        var json = rs.getString("json");
 //        var user = new Gson().fromJson(json, UserData.class);
-        return new UserData(username, password, email);
+        return new AuthData(username, token);
     }
 
     private void executeUpdate(String statement, Object... params) throws DataAccessException, SQLException {
@@ -73,12 +78,11 @@ public class MySqlUserDataAccess implements UserDataAccess {
 
     private final String[] createStatements = {
             """
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS auths (
                 username varchar(256) NOT NULL,
-                password varchar(256) NOT NULL,
-                email varchar(256) NOT NULL,
+                authToken varchar(256) NOT NULL,
                 PRIMARY KEY(username)
-            ) 
+            )
             """
     };
 
