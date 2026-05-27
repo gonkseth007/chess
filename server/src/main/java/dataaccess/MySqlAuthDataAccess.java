@@ -19,17 +19,32 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
 
 
     public void insertAuth(AuthData auth) throws DataAccessException, SQLException {
-        var statement = "INSERT INTO auths (username, authToken) VALUES (?, ?)";
-//        var json = new Gson().toJson(u);
-        executeUpdate(statement, auth.username(), auth.authToken());
+        var statement = "SELECT * FROM auths WHERE username=?";
+        try (var conn = DatabaseManager.getConnection()) {
+            var ps = conn.prepareStatement(statement);
+            ps.setString(1, auth.username());
+            var rs = ps.executeQuery();
+            if (rs.next()) {
+                statement = "UPDATE auths SET authToken=? WHERE username=?";
+                executeUpdate(statement, auth.authToken(), auth.username());
+            } else {
+                statement = "INSERT INTO auths (username, authToken) VALUES (?, ?)";
+                executeUpdate(statement, auth.username(), auth.authToken());
+            }
+        }
     }
 
     public AuthData getAuth(String token) throws DataAccessException, SQLException {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT username, authToken FROM auths WHERE token=?";
+            var statement = "SELECT username, authToken FROM auths WHERE authToken=?";
+//            System.out.print("here is the statement -> ");
+//            System.out.println(statement);
             try (var ps = conn.prepareStatement(statement)) {
+//                System.out.println("we are in the try prepareStatement");
                 ps.setString(1, token);
+//                System.out.println("we have set the string");
                 try (var rs = ps.executeQuery()) {
+//                    System.out.println("we are in the try executeQuery");
                     if (rs.next()) {
 //                        var json = rs.getString("json");
                         return readAuth(rs);
@@ -55,7 +70,10 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
 
     private AuthData readAuth(ResultSet rs) throws SQLException {
         var username = rs.getString("username");
+//        System.out.print("here is the username -> ");
+//        System.out.println(username);
         var token = rs.getString("authToken");
+//        System.out.println(token);
 //        var json = rs.getString("json");
 //        var user = new Gson().fromJson(json, UserData.class);
         return new AuthData(username, token);
@@ -72,6 +90,7 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
+            e.printStackTrace();
             throw new DataAccessException();
         }
     }
