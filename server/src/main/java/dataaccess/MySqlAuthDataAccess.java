@@ -4,12 +4,12 @@ import model.AuthData;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 public class MySqlAuthDataAccess implements AuthDataAccess {
+    private final MySqlDataAccessHelper mySqlHelper = new MySqlDataAccessHelper();
     public MySqlAuthDataAccess() {
         try {
-            configureDatabase();
+            mySqlHelper.configureDatabase(createStatements);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
         }
@@ -18,7 +18,7 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
 
     public void insertAuth(AuthData auth) throws DataAccessException {
         var statement = "INSERT INTO auths (username, authToken) VALUES (?, ?)";
-        executeUpdate(statement, auth.username(), auth.authToken());
+        mySqlHelper.executeUpdate(statement, auth.username(), auth.authToken());
     }
 
     public AuthData getAuth(String token) throws DataAccessException {
@@ -40,12 +40,12 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
 
     public void deleteAuth(AuthData auth) throws DataAccessException {
         var statement = "DELETE FROM auths WHERE authToken=?";
-        executeUpdate(statement, auth.authToken());
+        mySqlHelper.executeUpdate(statement, auth.authToken());
     }
 
     public void deleteAllAuths() throws DataAccessException {
         var statement = "TRUNCATE auths";
-        executeUpdate(statement);
+        mySqlHelper.executeUpdate(statement);
     }
 
 
@@ -53,20 +53,6 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
         var username = rs.getString("username");
         var token = rs.getString("authToken");
         return new AuthData(username, token);
-    }
-
-    private void executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (var conn = DatabaseManager.getConnection()) {
-            try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-                for (var i = 0; i < params.length; i++) {
-                    var param = params[i];
-                    if (param instanceof String p) ps.setString(i+1, p);
-                }
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new DataAccessException();
-        }
     }
 
     private final String[] createStatements = {
@@ -79,17 +65,4 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
             )
             """
     };
-
-    private void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            for (var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException();
-        }
-    }
 }

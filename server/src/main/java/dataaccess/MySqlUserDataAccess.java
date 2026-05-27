@@ -4,12 +4,12 @@ import model.UserData;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 public class MySqlUserDataAccess implements UserDataAccess {
+    private final MySqlDataAccessHelper mySqlHelper = new MySqlDataAccessHelper();
     public MySqlUserDataAccess() {
         try {
-            configureDatabase();
+            mySqlHelper.configureDatabase(createStatements);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
         }
@@ -17,7 +17,7 @@ public class MySqlUserDataAccess implements UserDataAccess {
 
     public void insertUser(UserData u) throws DataAccessException {
         var statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-        executeUpdate(statement, u.username(), u.password(), u.email());
+        mySqlHelper.executeUpdate(statement, u.username(), u.password(), u.email());
     }
 
     public UserData getUser(String username) throws DataAccessException {
@@ -39,7 +39,7 @@ public class MySqlUserDataAccess implements UserDataAccess {
 
     public void deleteAllUsers() throws DataAccessException {
         var statement = "TRUNCATE users";
-        executeUpdate(statement);
+        mySqlHelper.executeUpdate(statement);
     }
 
     private UserData readUser(ResultSet rs) throws SQLException {
@@ -47,20 +47,6 @@ public class MySqlUserDataAccess implements UserDataAccess {
         var password = rs.getString("password");
         var email = rs.getString("email");
         return new UserData(username, password, email);
-    }
-
-    private void executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (var conn = DatabaseManager.getConnection()) {
-            try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-                for (var i = 0; i < params.length; i++) {
-                    var param = params[i];
-                    if (param instanceof String p) ps.setString(i+1, p);
-                }
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new DataAccessException();
-        }
     }
 
     private final String[] createStatements = {
@@ -73,17 +59,4 @@ public class MySqlUserDataAccess implements UserDataAccess {
             )
             """
     };
-
-    private void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            for (var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException();
-        }
-    }
 }

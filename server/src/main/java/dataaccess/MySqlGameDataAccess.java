@@ -14,7 +14,8 @@ import static java.sql.Statement.RETURN_GENERATED_KEYS;
 public class MySqlGameDataAccess implements GameDataAccess {
     public MySqlGameDataAccess() {
         try {
-            configureDatabase();
+            MySqlDataAccessHelper mySqlHelper = new MySqlDataAccessHelper();
+            mySqlHelper.configureDatabase(createStatements);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
         }
@@ -88,10 +89,15 @@ public class MySqlGameDataAccess implements GameDataAccess {
             try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
                 for (var i = 0; i < params.length; i++) {
                     var param = params[i];
-                    if (param instanceof String p) ps.setString(i + 1, p);
-                    else if (param instanceof ChessGame p) ps.setString(i + 1, new Gson().toJson(p));
-                    else if (param == null) ps.setString(i+1, null);
-                    else if (param instanceof Integer p) ps.setInt(i+1, p);
+                    if (param instanceof String p) {
+                        ps.setString(i + 1, p);
+                    } else if (param instanceof ChessGame p) {
+                        ps.setString(i + 1, new Gson().toJson(p));
+                    } else if (param == null) {
+                        ps.setString(i + 1, null);
+                    } else if (param instanceof Integer p) {
+                        ps.setInt(i + 1, p);
+                    }
                 }
                 ps.executeUpdate();
                 var rs = ps.getGeneratedKeys();
@@ -117,17 +123,4 @@ public class MySqlGameDataAccess implements GameDataAccess {
             )
             """
     };
-
-    private void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            for (var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException();
-        }
-    }
 }
