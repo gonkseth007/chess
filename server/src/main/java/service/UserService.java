@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.*;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.SQLException;
 import java.util.Objects;
@@ -23,9 +24,10 @@ public class UserService {
         if (uDataAccess.getUser(request.username()) != null) {
             throw new AlreadyTakenException();
         }
+        String hashedPassword = BCrypt.hashpw(request.password(), BCrypt.gensalt());
         uDataAccess.insertUser(new UserData(
                 request.username(),
-                request.password(),
+                hashedPassword,
                 request.email()));
         String token = generateAuthToken();
         aDataAccess.insertAuth(new AuthData(
@@ -43,7 +45,7 @@ public class UserService {
         if (user == null) {
             throw new AuthorizationException();
         }
-        if (!Objects.equals(user.password(), request.password())) {
+        if (!BCrypt.checkpw(request.password(), user.password())) {
             throw new AuthorizationException();
         }
         String token = generateAuthToken();

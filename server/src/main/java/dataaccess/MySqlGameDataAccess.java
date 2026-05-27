@@ -20,7 +20,6 @@ public class MySqlGameDataAccess implements GameDataAccess {
         }
     }
 
-
     public GameData createGame(String gameName) throws DataAccessException, SQLException {
         var statement = "INSERT INTO games (gameID, gameName, jsonGame) VALUES (?, ?, ?)";
         ChessGame chessGame = new ChessGame();
