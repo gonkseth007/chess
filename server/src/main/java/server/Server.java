@@ -23,8 +23,8 @@ public class Server {
 
         // Register your endpoints and exception handlers here.
         UserDataAccess userDAO = new MySqlUserDataAccess();
-        AuthDataAccess authDAO = new MemoryAuthDataAccess();
-        GameDataAccess gameDAO = new MemoryGameDataAccess();
+        AuthDataAccess authDAO = new MySqlAuthDataAccess();
+        GameDataAccess gameDAO = new MySqlGameDataAccess();
         uService = new UserService(userDAO, authDAO);
         cService = new ClearService(authDAO, userDAO, gameDAO);
         gService = new GameService(authDAO, gameDAO);
