@@ -4,12 +4,10 @@ import com.google.gson.Gson;
 import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import model.CreateGameRequest;
-import model.CreateGameResult;
 import model.ListGamesResult;
 import service.GameService;
 
-import java.sql.SQLException;
+
 
 
 public class ListGamesHandler implements Handler {
@@ -18,7 +16,7 @@ public class ListGamesHandler implements Handler {
         this.service = gService;
     }
 
-    public void handle(Context context) throws DataAccessException, SQLException {
+    public void handle(Context context) throws DataAccessException {
         String token = context.header("authorization");
         ListGamesResult result = service.listGames(token);
         Gson gson = new Gson();

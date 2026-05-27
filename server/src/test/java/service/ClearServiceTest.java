@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.sql.SQLException;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +27,7 @@ class ClearServiceTest {
 
     @Test
     @DisplayName("Successful Clear Database")
-    void clearDatabase() throws DataAccessException, SQLException {
+    void clearDatabase() throws DataAccessException {
         userDAO.insertUser(new UserData("gonkdroid007", "starwarsiscool", "gonk@gonk.edu"));
         authDAO.insertAuth(new AuthData("gonkdroid007", "12345"));
         gameDAO.createGame("Gonk's Game");

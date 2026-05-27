@@ -3,7 +3,7 @@ package service;
 import dataaccess.*;
 import model.*;
 
-import java.sql.SQLException;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -17,7 +17,7 @@ public class GameService {
         this.gDataAccess = game;
     }
 
-    public CreateGameResult createGame(CreateGameRequest request) throws DataAccessException, SQLException {
+    public CreateGameResult createGame(CreateGameRequest request) throws DataAccessException {
         if (aDataAccess.getAuth(request.authToken()) == null) {
             throw new AuthorizationException();
         }
@@ -28,13 +28,12 @@ public class GameService {
         return new CreateGameResult(game.gameID());
     }
 
-    public void joinGame(JoinGameRequest request) throws DataAccessException, SQLException {
+    public void joinGame(JoinGameRequest request) throws DataAccessException {
         AuthData data = aDataAccess.getAuth(request.authToken());
-        if (data == null) {
-            throw new AuthorizationException();
-        }
-        GameData game = gDataAccess.getGame(request.gameID());
+        if (data == null) throw new AuthorizationException();
+        if (request.gameID() == null) throw new BadRequestException();
 
+        GameData game = gDataAccess.getGame(request.gameID());
         if ((!Objects.equals(request.playerColor(), "WHITE") && !Objects.equals(request.playerColor(), "BLACK")) || game == null) {
             throw new BadRequestException();
         }
@@ -44,12 +43,10 @@ public class GameService {
         } else if (Objects.equals(request.playerColor(), "BLACK") && game.blackUsername() == null) {
             GameData newGame = new GameData(game.gameID(),game.whiteUsername(),data.username(),game.gameName(),game.game());
             gDataAccess.updateGame(newGame);
-        } else {
-            throw new AlreadyTakenException();
-        }
+        } else throw new AlreadyTakenException();
     }
 
-    public ListGamesResult listGames(String token) throws DataAccessException, SQLException {
+    public ListGamesResult listGames(String token) throws DataAccessException {
         if (aDataAccess.getAuth(token) == null) {
             throw new AuthorizationException();
         }

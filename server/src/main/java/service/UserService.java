@@ -4,8 +4,6 @@ import dataaccess.*;
 import model.*;
 import org.mindrot.jbcrypt.BCrypt;
 
-import java.sql.SQLException;
-import java.util.Objects;
 import java.util.UUID;
 
 public class UserService {
@@ -17,7 +15,7 @@ public class UserService {
         this.aDataAccess = auth;
     }
 
-    public RegisterLoginResult register(RegisterRequest request) throws DataAccessException, SQLException {
+    public RegisterLoginResult register(RegisterRequest request) throws DataAccessException {
         if (request.username() == null || request.password() == null || request.email() == null) {
             throw new BadRequestException();
         }
@@ -37,7 +35,7 @@ public class UserService {
         return new RegisterLoginResult(request.username(), token);
     }
 
-    public RegisterLoginResult login(LoginRequest request) throws DataAccessException, SQLException {
+    public RegisterLoginResult login(LoginRequest request) throws DataAccessException {
         if (request.username() == null || request.password() == null) {
             throw new BadRequestException();
         }
@@ -56,7 +54,7 @@ public class UserService {
         return new RegisterLoginResult(user.username(), token);
     }
 
-    public void logout(String token) throws DataAccessException, SQLException {
+    public void logout(String token) throws DataAccessException {
         AuthData auth = aDataAccess.getAuth(token);
         if (auth == null) {
             throw new AuthorizationException();

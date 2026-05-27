@@ -8,7 +8,7 @@ import model.RegisterRequest;
 import model.RegisterLoginResult;
 import service.UserService;
 
-import java.sql.SQLException;
+
 
 public class RegisterHandler implements Handler {
     UserService service;
@@ -16,7 +16,7 @@ public class RegisterHandler implements Handler {
         this.service = uService;
     }
 
-    public void handle(Context context) throws DataAccessException, SQLException {
+    public void handle(Context context) throws DataAccessException {
         String body = context.body();
         Gson gson = new Gson();
         RegisterRequest request = gson.fromJson(body, RegisterRequest.class);

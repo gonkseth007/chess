@@ -2,14 +2,14 @@ package dataaccess;
 
 import model.AuthData;
 
-import java.sql.SQLException;
+
 
 public interface AuthDataAccess {
-    void insertAuth(AuthData u) throws DataAccessException, SQLException;
+    void insertAuth(AuthData u) throws DataAccessException;
 
-    AuthData getAuth(String token) throws DataAccessException, SQLException;
+    AuthData getAuth(String token) throws DataAccessException;
 
-    void deleteAuth(AuthData auth) throws DataAccessException, SQLException;
+    void deleteAuth(AuthData auth) throws DataAccessException;
 
-    void deleteAllAuths() throws DataAccessException, SQLException;
+    void deleteAllAuths() throws DataAccessException;
 }

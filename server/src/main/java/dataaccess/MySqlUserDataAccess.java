@@ -15,12 +15,12 @@ public class MySqlUserDataAccess implements UserDataAccess {
         }
     }
 
-    public void insertUser(UserData u) throws DataAccessException, SQLException {
+    public void insertUser(UserData u) throws DataAccessException {
         var statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
         executeUpdate(statement, u.username(), u.password(), u.email());
     }
 
-    public UserData getUser(String username) throws DataAccessException, SQLException {
+    public UserData getUser(String username) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
             var statement = "SELECT username, password, email FROM users WHERE username=?";
             try (var ps = conn.prepareStatement(statement)) {
@@ -37,7 +37,7 @@ public class MySqlUserDataAccess implements UserDataAccess {
         return null;
     }
 
-    public void deleteAllUsers() throws DataAccessException, SQLException {
+    public void deleteAllUsers() throws DataAccessException {
         var statement = "TRUNCATE users";
         executeUpdate(statement);
     }
@@ -49,7 +49,7 @@ public class MySqlUserDataAccess implements UserDataAccess {
         return new UserData(username, password, email);
     }
 
-    private void executeUpdate(String statement, Object... params) throws DataAccessException, SQLException {
+    private void executeUpdate(String statement, Object... params) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
             try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
                 for (var i = 0; i < params.length; i++) {

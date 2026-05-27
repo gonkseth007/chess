@@ -5,13 +5,10 @@ import com.google.gson.JsonObject;
 import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import model.CreateGameRequest;
-import model.CreateGameResult;
 import model.JoinGameRequest;
-import model.ListGamesResult;
 import service.GameService;
 
-import java.sql.SQLException;
+
 
 
 public class JoinGameHandler implements Handler {
@@ -20,7 +17,7 @@ public class JoinGameHandler implements Handler {
         this.service = gService;
     }
 
-    public void handle(Context context) throws DataAccessException, SQLException {
+    public void handle(Context context) throws DataAccessException {
         String body = context.body();
         String token = context.header("authorization");
         Gson gson = new Gson();

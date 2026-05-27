@@ -20,24 +20,20 @@ public class MySqlGameDataAccess implements GameDataAccess {
         }
     }
 
-    public GameData createGame(String gameName) throws DataAccessException, SQLException {
+    public GameData createGame(String gameName) throws DataAccessException {
         var statement = "INSERT INTO games (gameName, jsonGame) VALUES (?, ?)";
         ChessGame chessGame = new ChessGame();
         int gameID = executeUpdate(statement, gameName, chessGame);
         return new GameData(gameID, null, null, gameName, chessGame);
     }
 
-    public GameData getGame(Integer gameID) throws DataAccessException, SQLException {
+    public GameData getGame(Integer gameID) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-//            System.out.println("we have gotten connection in getGame");
             var statement = "SELECT gameID, whiteUsername, blackUsername, gameName, jsonGame FROM games WHERE gameID=?";
             try (var ps = conn.prepareStatement(statement)) {
-//                System.out.println("we have prepared the statement");
                 ps.setInt(1, gameID);
                 try (var rs = ps.executeQuery()) {
-//                    System.out.println("we have executed the query");
                     if (rs.next()) {
-//                        System.out.println("we are returning readGame");
                         return readGame(rs);
                     }
                 }
@@ -55,9 +51,7 @@ public class MySqlGameDataAccess implements GameDataAccess {
             var st = conn.createStatement();
             try (var rs = st.executeQuery(gameIDQuery)) {
                 while (rs.next()) {
-//                    System.out.println("we addding a game!");
                     allGames.add(getGame(rs.getInt("gameID")));
-//                    System.out.println(allGames.getLast().gameID());
                 }
             }
         } catch (SQLException e) {
@@ -67,73 +61,51 @@ public class MySqlGameDataAccess implements GameDataAccess {
         return allGames;
     }
 
-    public void updateGame(GameData game) throws DataAccessException, SQLException {
+    public void updateGame(GameData game) throws DataAccessException {
         var statement = "UPDATE games SET whiteUsername=?, blackUsername=?, jsonGame=? WHERE gameID=?";
         ChessGame chessGame = game.game();
         executeUpdate(statement, game.whiteUsername(), game.blackUsername(), chessGame, game.gameID());
     }
 
-    public void deleteAllGames() throws DataAccessException, SQLException {
+    public void deleteAllGames() throws DataAccessException {
         var statement = "TRUNCATE games";
         executeUpdate(statement);
     }
 
 
     private GameData readGame(ResultSet rs) throws SQLException {
-//        System.out.println("we are in readGame");
         var json = rs.getString("jsonGame");
-//        System.out.println("we have gotten the json");
-//        System.out.println(json);
         var chessGame = new Gson().fromJson(json, ChessGame.class);
         int gameID = rs.getInt("gameID");
         String whiteUsername = rs.getString("whiteUsername");
         String blackUsername = rs.getString("blackUsername");
         String gameName = rs.getString("gameName");
-//        System.out.print("the id is ");
-//        System.out.println(gameName);
         return new GameData(gameID, whiteUsername, blackUsername, gameName, chessGame);
     }
 
-    private int executeUpdate(String statement, Object... params) throws DataAccessException, SQLException {
-//        System.out.println("executing this updating");
+    private int executeUpdate(String statement, Object... params) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-//            System.out.println("got the connection");
             try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-//                System.out.println("prepared the statement");
                 for (var i = 0; i < params.length; i++) {
-//                    System.out.println("in the for loop");
                     var param = params[i];
-                    if (param instanceof String p) {
-//                        System.out.println("if");
-                        ps.setString(i + 1, p);
-                    }
-                    else if (param instanceof ChessGame p) {
-//                        System.out.println("else if");
-                        ps.setString(i + 1, new Gson().toJson(p));
-                    } else if (param == null) ps.setString(i+1, null);
+                    if (param instanceof String p) ps.setString(i + 1, p);
+                    else if (param instanceof ChessGame p) ps.setString(i + 1, new Gson().toJson(p));
+                    else if (param == null) ps.setString(i+1, null);
                     else if (param instanceof Integer p) ps.setInt(i+1, p);
                 }
-//                System.out.println("we about to execute on this statement");
                 ps.executeUpdate();
-//                System.out.println("we about to generate the keys");
                 var rs = ps.getGeneratedKeys();
                 if (rs.next()) {
-//                    System.out.print("we about to return the ID -> ");
-//                    System.out.println(rs.getInt(1));
                     return rs.getInt(1);
                 }
                 return 0;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new DataAccessException();
         }
     }
 
     private final String[] createStatements = {
-//            """
-//            DROP TABLE IF EXISTS games
-//            """,
             """
             CREATE TABLE IF NOT EXISTS games (
                 gameID int NOT NULL AUTO_INCREMENT,
