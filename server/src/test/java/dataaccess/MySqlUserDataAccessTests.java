@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MySqlUserDataAccessTest {
+class MySqlUserDataAccessTests {
     private static MySqlUserDataAccess users;
 
     @BeforeAll
