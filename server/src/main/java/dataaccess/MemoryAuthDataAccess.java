@@ -12,6 +12,7 @@ public class MemoryAuthDataAccess implements AuthDataAccess {
     }
 
     public AuthData getAuth(String token) {
+        System.out.println("in memory auth");
         return auths.get(token);
     }
 

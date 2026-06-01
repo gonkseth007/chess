@@ -19,7 +19,11 @@ public class CreateGameHandler implements Handler {
 
     public void handle(Context context) throws DataAccessException {
         String body = context.body();
+        System.out.println("we in CreateGameHandler");
         String token = context.header("authorization");
+        System.out.println(body);
+        System.out.print("here is the authToken -> ");
+        System.out.println(token);
         Gson gson = new Gson();
         CreateGameRequest request = gson.fromJson(body, CreateGameRequest.class);
         request = new CreateGameRequest(request.gameName(), token);

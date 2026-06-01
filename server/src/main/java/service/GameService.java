@@ -18,10 +18,13 @@ public class GameService {
     }
 
     public CreateGameResult createGame(CreateGameRequest request) throws DataAccessException {
+        System.out.println(request.authToken());
         if (aDataAccess.getAuth(request.authToken()) == null) {
+            System.out.println("throwing auth exception");
             throw new AuthorizationException();
         }
         if (request.gameName() == null) {
+            System.out.println("throwing bad request exception");
             throw new BadRequestException();
         }
         GameData game = gDataAccess.createGame(request.gameName());

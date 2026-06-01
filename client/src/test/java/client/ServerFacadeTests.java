@@ -67,12 +67,12 @@ public class ServerFacadeTests {
     @Test
     @DisplayName("Successfully Logout User")
     void logoutUserSuccess() throws ResponseException, DataAccessException {
-        MySqlUserDataAccess users = new MySqlUserDataAccess();
+        MySqlAuthDataAccess auths = new MySqlAuthDataAccess();
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
-        RegisterLoginResult result = facade.login(new LoginRequest("gonkdroid007", "starwarsiscool"));
+        RegisterLoginResult result = facade.login(new LoginRequest("gonkdroid007", "gonkdroidrules"));
         assertEquals("gonkdroid007", result.username());
         facade.logout(result.authToken());
-        assertNull(users.getUser("gonkdroid007"));
+        assertNull(auths.getAuth(result.authToken()));
     }
 
     @Test
@@ -80,15 +80,16 @@ public class ServerFacadeTests {
     void logoutUserFail() throws ResponseException {
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         assertThrows(ResponseException.class, () -> facade.logout("thisistotallyarealAuthToken"));
-        RegisterLoginResult result = facade.login(new LoginRequest("gonkdroid007", "starwarsiscool"));
+        RegisterLoginResult result = facade.login(new LoginRequest("gonkdroid007", "gonkdroidrules"));
         assertThrows(ResponseException.class, () -> facade.logout(String.format("someextra%s", result.authToken())));
     }
 
     @Test
     @DisplayName("Successfully Create Game")
-    void createGameSuccess() throws DataAccessException {
+    void createGameSuccess() throws DataAccessException, ResponseException {
+        var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         var gameDAO = new MySqlGameDataAccess();
-        CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", "auth1234"));
+        CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", userResult.authToken()));
         assertEquals(1, result.gameID());
         assertEquals("Cool Game", gameDAO.getGame(result.gameID()).gameName());
         assertNull(gameDAO.getGame(result.gameID()).whiteUsername());
@@ -104,19 +105,21 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully Join Game")
-    void joinGameSuccess() throws DataAccessException {
+    void joinGameSuccess() throws DataAccessException, ResponseException {
+        var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         var gameDAO = new MySqlGameDataAccess();
-        CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", "auth1234"));
-        facade.joinGame(new JoinGameRequest("WHITE", result.gameID(), "auth1234"));
-        assertEquals("gonkgonk", gameDAO.getGame(result.gameID()).whiteUsername());
+        CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", userResult.authToken()));
+        facade.joinGame(new JoinGameRequest("WHITE", result.gameID(), userResult.authToken()));
+        assertEquals("gonkdroid007", gameDAO.getGame(result.gameID()).whiteUsername());
         assertNull(gameDAO.getGame(result.gameID()).blackUsername());
     }
 
     @Test
     @DisplayName("Fail to Join Game")
     void joinGameFail() throws ResponseException {
-        CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", "auth1234"));
-        facade.joinGame(new JoinGameRequest("WHITE", result.gameID(), "auth5678"));
+        var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
+        CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", userResult.authToken()));
+        facade.joinGame(new JoinGameRequest("WHITE", result.gameID(), userResult.authToken()));
         assertThrows(ResponseException.class, () -> facade.joinGame(new JoinGameRequest("BLACK", result.gameID(), "fake_auth_hehehe")));
         assertThrows(ResponseException.class, () -> facade.joinGame(new JoinGameRequest("GRAY", result.gameID(), "auth1234")));
         assertThrows(ResponseException.class, () -> facade.joinGame(new JoinGameRequest("WHITE", result.gameID(), "auth1234")));
@@ -124,11 +127,12 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully List Game")
-    void listGamesSuccess() {
-        CreateGameResult game1 = facade.createGame(new CreateGameRequest("Cool Game", "auth1234"));
-        CreateGameResult game2 = facade.createGame(new CreateGameRequest("Lame Game", "auth5678"));
+    void listGamesSuccess() throws ResponseException {
+        var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
+        CreateGameResult game1 = facade.createGame(new CreateGameRequest("Cool Game", userResult.authToken()));
+        CreateGameResult game2 = facade.createGame(new CreateGameRequest("Lame Game", userResult.authToken()));
 
-        ListGamesResult games = facade.listGames("auth1234");
+        ListGamesResult games = facade.listGames(userResult.authToken());
         assertEquals("Cool Game", games.games().getFirst().gameName());
         assertEquals(2, games.games().get(1).gameID());
         assertNotEquals(game1, game2);

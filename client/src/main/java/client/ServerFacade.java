@@ -16,30 +16,68 @@ public class ServerFacade {
     public ServerFacade(int port) { serverUrl = String.format("http://localhost:%d", port); }
 
     public RegisterLoginResult register(RegisterRequest request) throws ResponseException {
-        var req = buildRequest("POST", "/user", request);
+        System.out.println("we in serverFacade register");
+        System.out.println(request);
+        var req = buildRequest("POST", "/user", request, null);
+        System.out.println("we built the request");
+        System.out.println(req);
         var response = sendRequest(req);
         return handleResponse(response, RegisterLoginResult.class);
     }
 
-    public RegisterLoginResult login(LoginRequest request) { return null; }
-
-    public void logout(String token) { }
-
-    public void joinGame(JoinGameRequest request) { }
-
-    public CreateGameResult createGame(CreateGameRequest request) { return null; }
-
-    public ListGamesResult listGames(String token) { return null; }
-
-    public void clearDatabase() throws ResponseException {
-        var request = buildRequest("DELETE", "/db", null);
-        sendRequest(request);
+    public RegisterLoginResult login(LoginRequest request) throws ResponseException {
+        var req = buildRequest("POST", "/session", request, null);
+        var response = sendRequest(req);
+        return handleResponse(response, RegisterLoginResult.class);
     }
 
-    private HttpRequest buildRequest(String method, String path, Object body) {
+    public void logout(String token) throws ResponseException {
+        var request = buildRequest("DELETE", "/session", null, token);
+        var response = sendRequest(request);
+        handleResponse(response, null);
+    }
+
+    public void joinGame(JoinGameRequest request) throws ResponseException {
+        var req = buildRequest("PUT", "/game", request, request.authToken());
+        var response = sendRequest(req);
+        handleResponse(response, null);
+    }
+
+    public CreateGameResult createGame(CreateGameRequest request) throws ResponseException {
+        System.out.println("we in serverFacade createGame");
+        System.out.println(request);
+        System.out.println(request.authToken());
+        var req = buildRequest("POST", "/game", request, request.authToken());
+        System.out.println("we built the request");
+        System.out.println(req);
+        var response = sendRequest(req);
+        System.out.println("we sent the request");
+        System.out.println(response);
+        CreateGameResult result = handleResponse(response, CreateGameResult.class);
+        System.out.println("we handled the response");
+        return result;
+    }
+
+    public ListGamesResult listGames(String token) throws ResponseException {
+        var request = buildRequest("GET", "/game", null, token);
+        var response = sendRequest(request);
+        return handleResponse(response, ListGamesResult.class);
+    }
+
+    public void clearDatabase() throws ResponseException {
+        var request = buildRequest("DELETE", "/db", null, null);
+        var response = sendRequest(request);
+        handleResponse(response, null);
+    }
+
+    private HttpRequest buildRequest(String method, String path, Object body, String header) {
         var request = HttpRequest.newBuilder().uri(URI.create(serverUrl + path)).method(method, makeRequestBody(body));
         if (body != null) {
             request.setHeader("Content-Type", "application/json");
+        }
+        if (header != null) {
+            System.out.println("setting the authorization header!");
+            request.setHeader("authorization", header);
         }
         return request.build();
     }
@@ -63,7 +101,7 @@ public class ServerFacade {
     private <T> T handleResponse(HttpResponse<String> response, Class<T> responseClass) throws ResponseException {
         var status = response.statusCode();
         if (status / 100 != 2) {
-            var body = response.body();
+//            var body = response.body();
 //            if (body != null) {
                 throw new ResponseException();
 //            }

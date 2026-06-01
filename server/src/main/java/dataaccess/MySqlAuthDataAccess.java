@@ -22,6 +22,7 @@ public class MySqlAuthDataAccess implements AuthDataAccess {
     }
 
     public AuthData getAuth(String token) throws DataAccessException {
+        System.out.println("in sql auth");
         try (var conn = DatabaseManager.getConnection()) {
             var statement = "SELECT username, authToken FROM auths WHERE authToken=?";
             try (var ps = conn.prepareStatement(statement)) {
