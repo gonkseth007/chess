@@ -5,42 +5,30 @@ import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import client.websocket.NotificationHandler;
-import model.CreateGameRequest;
 import model.GameData;
-import model.JoinGameRequest;
-import model.ListGamesResult;
 import webSocketMessages.Notification;
 
 import java.util.*;
 
 import static ui.EscapeSequences.*;
 
-//import client.websocket.WebSocketFacade;
-
 public class GameClient implements NotificationHandler {
 //    private String visitorName = null;
     private final ServerFacade server;
-//    private final String serverURL;
     private final String authToken;
     private final Integer gameID;
     private final boolean isPlaying;
     private final String playerColor;
-//    private final HashMap<Integer, GameData> gameDataHashMap = new HashMap<>();
-//    private final WebSocketFacade ws;
-//    private State state = State.SIGNEDOUT;
 
-    public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
+    public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) {
         server = new ServerFacade(serverURL);
-//        this.serverURL = serverURL;
         this.authToken = authToken;
         this.gameID = gameID;
         this.isPlaying = isPlaying;
         this.playerColor = playerColor;
-//        ws = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() throws ResponseException {
-//        System.out.println("You have successfully logged in! You can now join, create, or observe games! \nIf you need help, type \"help\" to get some help")
         printBoard();
         Scanner scanner = new Scanner(System.in);
         String result = "";
@@ -50,15 +38,13 @@ public class GameClient implements NotificationHandler {
 
             try {
                 result = eval(line);
-//                System.out.println("result gotten and it below!");
                 System.out.println(SET_TEXT_COLOR_BLUE + result);
 
             } catch (Throwable e) {
-                var msg = e.toString();
-                System.out.print(msg);
+                System.out.print(SET_TEXT_COLOR_RED);
+                System.out.println("Sorry, an unexpected error occurred! Please try again!");
             }
         }
-        System.out.println();
     }
 
     public void notify(Notification notification) {
@@ -71,28 +57,25 @@ public class GameClient implements NotificationHandler {
     }
 
     public String eval(String input) {
-        try {
+//        try {
             String[] tokens = input.toLowerCase().split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
-//                case "create", "c" -> createGame(params);
-//                case "list", "g" -> listGames();
-//                case "join", "j" -> joinGame(params);
-//                case "observe", "o" -> observeGame(params);
-                case "show", "s" -> printBoard();
+//                case "show", "s" -> printBoard();
                 case "quit", "q" -> "quit";
-                default -> help();
+                case "help", "h" -> help();
+                default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
             };
-        } catch (ResponseException ex) {
-            return ex.getMessage();
-        }
+//        } catch (ResponseException ex) {
+//            System.out.print(SET_TEXT_COLOR_RED);
+//            return "Sorry, an unexpected error occurred! Please try again!";
+//        }
     }
 
     public String printBoard() throws ResponseException {
         if (!this.isPlaying || Objects.equals(this.playerColor, "WHITE")) {
             return printWhiteBoard();
-//            return printBlackBoard();
         } else {
             return printBlackBoard();
         }
@@ -222,5 +205,6 @@ public class GameClient implements NotificationHandler {
                 - Quit the game: "q", "quit"
                 - Get help (this message): "h", "help"
                 """;
+//                - Display the board again: "s", "show"
     }
 }

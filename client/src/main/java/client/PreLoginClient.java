@@ -5,7 +5,6 @@ import java.util.Scanner;
 
 import model.*;
 import client.websocket.NotificationHandler;
-//import client.websocket.WebSocketFacade;
 import webSocketMessages.Notification;
 
 import static ui.EscapeSequences.*;
@@ -15,13 +14,10 @@ public class PreLoginClient implements NotificationHandler {
     private final ServerFacade server;
     private final String serverURL;
     private String authToken = null;
-//    private final WebSocketFacade ws;
-//    private State state = State.SIGNEDOUT;
 
-    public PreLoginClient(String serverURL) throws ResponseException {
+    public PreLoginClient(String serverURL) {
         server = new ServerFacade(serverURL);
         this.serverURL = serverURL;
-//        ws = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() {
@@ -35,18 +31,16 @@ public class PreLoginClient implements NotificationHandler {
 
             try {
                 result = eval(line);
-//                System.out.println("result gotten and it below!");
                 System.out.println(result);
                 if (authToken != null) {
                     new PostLoginClient(serverURL, authToken).run();
                     authToken = null;
                 }
             } catch (Throwable e) {
-                var msg = e.toString();
-                System.out.print(msg);
+                System.out.print(SET_TEXT_COLOR_RED);
+                System.out.println("Sorry, an unexpected error occurred! Please try again!");
             }
         }
-        System.out.println();
     }
 
     public void notify(Notification notification) {
@@ -60,7 +54,7 @@ public class PreLoginClient implements NotificationHandler {
 
     public String eval(String input) {
         try {
-            String[] tokens = input.toLowerCase().split(" ");
+            String[] tokens = input.split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
@@ -78,13 +72,7 @@ public class PreLoginClient implements NotificationHandler {
 
     public String register(String... params) throws ResponseException {
         if (params.length > 2) {
-//            state = State.SIGNEDIN;
-//            visitorName = String.join("-", params);
-//            ws.enterPetShop(visitorName);
             try {
-//                System.out.println(params[0]);
-//                System.out.println(params[1]);
-//                System.out.println(params[2]);
                 RegisterLoginResult result = server.register(new RegisterRequest(params[0], params[1], params[2]));
                 authToken = result.authToken();
             } catch (BadRequestException ex) {
@@ -96,7 +84,6 @@ public class PreLoginClient implements NotificationHandler {
             } catch (ResponseException ex) {
                 throw new ResponseException();
             }
-//            System.out.println("we have registered the user!");
             System.out.print(SET_TEXT_COLOR_BLUE);
             return String.format("You are now a registered user with the username %s!", params[0]);
         }
@@ -106,9 +93,6 @@ public class PreLoginClient implements NotificationHandler {
 
     public String login(String... params) throws ResponseException {
         if (params.length > 1) {
-//            state = State.SIGNEDIN;
-//            visitorName = String.join("-", params);
-//            ws.enterPetShop(visitorName);
             try {
                 RegisterLoginResult result = server.login(new LoginRequest(params[0], params[1]));
                 authToken = result.authToken();

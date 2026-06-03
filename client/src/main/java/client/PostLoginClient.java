@@ -8,8 +8,6 @@ import java.util.*;
 
 import static ui.EscapeSequences.*;
 
-//import client.websocket.WebSocketFacade;
-
 public class PostLoginClient implements NotificationHandler {
 //    private String visitorName = null;
     private final ServerFacade server;
@@ -17,15 +15,12 @@ public class PostLoginClient implements NotificationHandler {
     private final String authToken;
     private final HashMap<Integer, GameData> gameDataHashMap = new HashMap<>();
     private Boolean joinedGame = false;
-    private ArrayList<String> gameInfo = new ArrayList<>();
-//    private final WebSocketFacade ws;
-//    private State state = State.SIGNEDOUT;
+    private final ArrayList<String> gameInfo = new ArrayList<>();
 
-    public PostLoginClient(String serverURL, String authToken) throws ResponseException {
+    public PostLoginClient(String serverURL, String authToken) {
         server = new ServerFacade(serverURL);
         this.serverURL = serverURL;
         this.authToken = authToken;
-//        ws = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() {
@@ -39,7 +34,6 @@ public class PostLoginClient implements NotificationHandler {
 
             try {
                 result = eval(line);
-//                System.out.println("result gotten and it below!");
                 System.out.println(SET_TEXT_COLOR_BLUE + result);
                 if (joinedGame) {
                     new GameClient(serverURL, authToken, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
@@ -48,11 +42,10 @@ public class PostLoginClient implements NotificationHandler {
                 }
 
             } catch (Throwable e) {
-                var msg = e.toString();
-                System.out.print(msg);
+                System.out.print(SET_TEXT_COLOR_RED);
+                System.out.println("Sorry, an unexpected error occurred! Please try again!");
             }
         }
-        System.out.println();
     }
 
     public void notify(Notification notification) {
@@ -66,7 +59,7 @@ public class PostLoginClient implements NotificationHandler {
 
     public String eval(String input) {
         try {
-            String[] tokens = input.toLowerCase().split(" ");
+            String[] tokens = input.split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
@@ -82,19 +75,14 @@ public class PostLoginClient implements NotificationHandler {
             System.out.print(SET_TEXT_COLOR_RED);
             return "Sorry, you are not authorized to perform that action! Try logging out and logging back in!";
         } catch (ResponseException ex) {
-            return ex.getMessage();
+            System.out.print(SET_TEXT_COLOR_RED);
+            return "Sorry, an unexpected error occurred! Please try again!";
         }
     }
 
     public String createGame(String... params) throws ResponseException {
         if (params.length >= 1) {
-//            state = State.SIGNEDIN;
-//            visitorName = String.join("-", params);
-//            ws.enterPetShop(visitorName);
             try {
-//                System.out.println(params[0]);
-//                System.out.println(params[1]);
-//                System.out.println(params[2]);
                 server.createGame(new CreateGameRequest(params[0], authToken));
             } catch (BadRequestException ex) {
                 System.out.print(SET_TEXT_COLOR_RED);
@@ -102,8 +90,6 @@ public class PostLoginClient implements NotificationHandler {
             } catch (AuthorizationException ex) {
                 throw new AuthorizationException();
             } catch (ResponseException ex) {
-//                System.out.println("in the catch");
-//                ex.printStackTrace();
                 throw new ResponseException();
             }
             return "You have successfully created the game!";
@@ -113,9 +99,6 @@ public class PostLoginClient implements NotificationHandler {
 
     public String joinGame(String... params) throws ResponseException {
         if (params.length > 1) {
-//            state = State.SIGNEDIN;
-//            visitorName = String.join("-", params);
-//            ws.enterPetShop(visitorName);
             String gameName;
             try {
                 GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
@@ -148,16 +131,11 @@ public class PostLoginClient implements NotificationHandler {
 
     public String observeGame(String... params) throws ResponseException {
         if (params.length >= 1) {
-//            state = State.SIGNEDIN;
-//            visitorName = String.join("-", params);
-//            ws.enterPetShop(visitorName);
-//            try {
-//                server.joinGame(new JoinGameRequest(params[1], gameIDs.get(Integer.parseInt(params[0])), authToken));
-//            } catch (ResponseException ex) {
-//                throw new ResponseException();
-//            }
             try {
                 GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
+                if (game == null) {
+                    return "Sorry there is no game correlating to that given number! List out the games and use the number in front of the game name to join!";
+                }
                 gameInfo.addFirst(String.valueOf(game.gameID()));
                 gameInfo.add(1, "false");
                 gameInfo.add(2, null);
@@ -171,9 +149,6 @@ public class PostLoginClient implements NotificationHandler {
     }
 
     public String listGames() throws ResponseException {
-//            state = State.SIGNEDIN;
-//            visitorName = String.join("-", params);
-//            ws.enterPetShop(visitorName);
         StringBuilder listedGamesDisplay = new StringBuilder();
         try {
             ListGamesResult result = server.listGames(authToken);
