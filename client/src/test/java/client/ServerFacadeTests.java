@@ -7,7 +7,7 @@ import server.Server;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ServerFacadeTests {
 
     private static Server server;
@@ -33,6 +33,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully Register User")
+    @Order(1)
     void registerUserSuccess() throws ResponseException {
         var result = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         assertEquals("gonkdroid007", result.username());
@@ -41,6 +42,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Fail to Register User")
+    @Order(2)
     void registerUserFail() throws ResponseException {
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         assertThrows(ResponseException.class, () -> facade.register(new RegisterRequest("gonkdroid007", "iforgotoldpasswordsore-registering", "gonk@gonk.droid")));
@@ -49,6 +51,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully Login User")
+    @Order(3)
     void loginUserSuccess() throws ResponseException {
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         RegisterLoginResult result = facade.login(new LoginRequest("gonkdroid007", "gonkdroidrules"));
@@ -58,6 +61,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Fail to Login User")
+    @Order(4)
     void loginUserFail() throws ResponseException {
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         assertThrows(ResponseException.class, () -> facade.login(new LoginRequest("gonkdroid007", "iknowmypasswordtrust")));
@@ -66,6 +70,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully Logout User")
+    @Order(5)
     void logoutUserSuccess() throws ResponseException, DataAccessException {
         MySqlAuthDataAccess auths = new MySqlAuthDataAccess();
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
@@ -77,6 +82,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Fail to Logout User")
+    @Order(6)
     void logoutUserFail() throws ResponseException {
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         assertThrows(ResponseException.class, () -> facade.logout("thisistotallyarealAuthToken"));
@@ -86,6 +92,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully Create Game")
+    @Order(7)
     void createGameSuccess() throws DataAccessException, ResponseException {
         var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         var gameDAO = new MySqlGameDataAccess();
@@ -98,6 +105,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Fail to Create Game")
+    @Order(8)
     void createGameFail() {
         assertThrows(ResponseException.class, () -> facade.createGame(new CreateGameRequest("COOL GAME", "fakeAuth123")));
         assertThrows(ResponseException.class, () -> facade.createGame(new CreateGameRequest(null, "auth1234")));
@@ -105,6 +113,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully Join Game")
+    @Order(9)
     void joinGameSuccess() throws DataAccessException, ResponseException {
         var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         var gameDAO = new MySqlGameDataAccess();
@@ -116,6 +125,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Fail to Join Game")
+    @Order(10)
     void joinGameFail() throws ResponseException {
         var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         CreateGameResult result = facade.createGame(new CreateGameRequest("Cool Game", userResult.authToken()));
@@ -127,6 +137,7 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Successfully List Game")
+    @Order(11)
     void listGamesSuccess() throws ResponseException {
         var userResult = facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
         CreateGameResult game1 = facade.createGame(new CreateGameRequest("Cool Game", userResult.authToken()));
@@ -140,12 +151,14 @@ public class ServerFacadeTests {
 
     @Test
     @DisplayName("Fail to List Game")
+    @Order(12)
     void listGamesFail() {
         assertThrows(ResponseException.class, () -> facade.listGames("fake_auth_hehehe"));
     }
 
     @Test
     @DisplayName("Successful Clear Database")
+    @Order(13)
     void clearDatabase() throws ResponseException, DataAccessException {
         var userDAO = new MySqlUserDataAccess();
         var authDAO = new MySqlAuthDataAccess();

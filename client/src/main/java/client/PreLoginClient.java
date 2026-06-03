@@ -11,7 +11,7 @@ import webSocketMessages.Notification;
 import static ui.EscapeSequences.*;
 
 public class PreLoginClient implements NotificationHandler {
-    private String visitorName = null;
+//    private String visitorName = null;
     private final ServerFacade server;
     private final String serverURL;
     private String authToken = null;
@@ -36,11 +36,11 @@ public class PreLoginClient implements NotificationHandler {
             try {
                 result = eval(line);
 //                System.out.println("result gotten and it below!");
-                System.out.println(SET_TEXT_COLOR_BLUE + result);
+                System.out.println(result);
                 if (authToken != null) {
                     new PostLoginClient(serverURL, authToken).run();
+                    authToken = null;
                 }
-                authToken = null;
             } catch (Throwable e) {
                 var msg = e.toString();
                 System.out.print(msg);
@@ -67,10 +67,12 @@ public class PreLoginClient implements NotificationHandler {
                 case "register", "r" -> register(params);
                 case "login", "l" -> login(params);
                 case "quit", "q" -> "quit";
-                default -> help();
+                case "help", "h" -> help();
+                default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"!";
             };
         } catch (ResponseException ex) {
-            return ex.getMessage();
+            System.out.print(SET_TEXT_COLOR_RED);
+            return "Sorry, an unexpected error occurred! Please try again!";
         }
     }
 
@@ -85,15 +87,21 @@ public class PreLoginClient implements NotificationHandler {
 //                System.out.println(params[2]);
                 RegisterLoginResult result = server.register(new RegisterRequest(params[0], params[1], params[2]));
                 authToken = result.authToken();
+            } catch (BadRequestException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return "Oops, you forgot something in the register process! In order to register, type \"register\" or \"r\" and then type in your desired username, password, and your email all separated by a space!";
+            } catch (AlreadyTakenException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return "Aw shucks! You picked such a cool username that someone else already took it! Try to register again with a different username!";
             } catch (ResponseException ex) {
-                System.out.println("in the catch");
-//                ex.printStackTrace();
                 throw new ResponseException();
             }
 //            System.out.println("we have registered the user!");
+            System.out.print(SET_TEXT_COLOR_BLUE);
             return String.format("You are now a registered user with the username %s!", params[0]);
         }
-        throw new ResponseException();
+        System.out.print(SET_TEXT_COLOR_RED);
+        return "Oops, you forgot something in the register process! In order to register, type \"register\" or \"r\" and then type in your desired username, password, and your email all separated by a space!";
     }
 
     public String login(String... params) throws ResponseException {
@@ -104,12 +112,20 @@ public class PreLoginClient implements NotificationHandler {
             try {
                 RegisterLoginResult result = server.login(new LoginRequest(params[0], params[1]));
                 authToken = result.authToken();
+            } catch (BadRequestException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return "Oops, your input wasn't right! In order to login, type \"login\" or \"l\" and then type in your username and your password separated by a space!";
+            } catch (AuthorizationException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return "Oops, either your username or password were incorrect! If you can't remember your info or haven't registered before, register first! Otherwise try logging in again!";
             } catch (ResponseException ex) {
                 throw new ResponseException();
             }
+            System.out.print(SET_TEXT_COLOR_BLUE);
             return String.format("You signed in as %s.", params[0]);
         }
-        throw new ResponseException();
+        System.out.print(SET_TEXT_COLOR_RED);
+        return "Oops, you forgot something while logging in! In order to login, type \"login\" or \"l\" and then type in your username and your password separated by a space!";
     }
 
     public String help() {
