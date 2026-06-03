@@ -112,10 +112,14 @@ public class ServerFacade {
         if (status / 100 != 2) {
 //            var body = response.body();
 //            if (body != null) {
-                throw new ResponseException();
-//            }
-
-//            throw new ResponseException;
+            if (status == 400) {
+                throw new BadRequestException();
+            } else if (status == 401) {
+                throw new AuthorizationException();
+            } else if (status == 403) {
+                throw new BadRequestException();
+            }
+            throw new ResponseException();
         }
 
         if (responseClass != null) {
