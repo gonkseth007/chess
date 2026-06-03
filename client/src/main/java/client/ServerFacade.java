@@ -13,15 +13,20 @@ public class ServerFacade {
     private final HttpClient client = HttpClient.newHttpClient();
     private final String serverUrl;
 
-    public ServerFacade(int port) { serverUrl = String.format("http://localhost:%d", port); }
+    public ServerFacade(String url) { serverUrl = url; }
 
     public RegisterLoginResult register(RegisterRequest request) throws ResponseException {
-        System.out.println("we in serverFacade register");
-        System.out.println(request);
+//        System.out.println("we in serverFacade register");
+//        System.out.println(request);
         var req = buildRequest("POST", "/user", request, null);
-        System.out.println("we built the request");
-        System.out.println(req);
+//        System.out.println("we built the request");
+//        System.out.println(req);
+//        System.out.println(serverUrl);
+//        System.out.println(req.uri());
+//        System.out.println(req.headers().map());
         var response = sendRequest(req);
+//        System.out.println("we sent the request!");
+//        System.out.println(response);
         return handleResponse(response, RegisterLoginResult.class);
     }
 
@@ -44,18 +49,19 @@ public class ServerFacade {
     }
 
     public CreateGameResult createGame(CreateGameRequest request) throws ResponseException {
-        System.out.println("we in serverFacade createGame");
-        System.out.println(request);
-        System.out.println(request.authToken());
+//        System.out.println("we in serverFacade createGame");
+//        System.out.println(request);
+//        System.out.println(request.authToken());
         var req = buildRequest("POST", "/game", request, request.authToken());
-        System.out.println("we built the request");
-        System.out.println(req);
+//        System.out.println("we built the request");
+//        System.out.println(req);
         var response = sendRequest(req);
-        System.out.println("we sent the request");
-        System.out.println(response);
-        CreateGameResult result = handleResponse(response, CreateGameResult.class);
-        System.out.println("we handled the response");
-        return result;
+//        System.out.println("we sent the request");
+//        System.out.println(response);
+//        CreateGameResult result = handleResponse(response, CreateGameResult.class);
+//        System.out.println("we handled the response");
+//        return result;
+        return handleResponse(response, CreateGameResult.class);
     }
 
     public ListGamesResult listGames(String token) throws ResponseException {
@@ -76,7 +82,7 @@ public class ServerFacade {
             request.setHeader("Content-Type", "application/json");
         }
         if (header != null) {
-            System.out.println("setting the authorization header!");
+//            System.out.println("setting the authorization header!");
             request.setHeader("authorization", header);
         }
         return request.build();
@@ -84,7 +90,10 @@ public class ServerFacade {
 
     private BodyPublisher makeRequestBody(Object request) {
         if (request != null) {
-            return BodyPublishers.ofString(new Gson().toJson(request));
+//            System.out.println("making the request body as json");
+            String json = new Gson().toJson(request);
+//            System.out.println(json);
+            return BodyPublishers.ofString(json);
         } else {
             return BodyPublishers.noBody();
         }
