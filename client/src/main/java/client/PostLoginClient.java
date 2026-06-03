@@ -11,7 +11,7 @@ import static ui.EscapeSequences.*;
 //import client.websocket.WebSocketFacade;
 
 public class PostLoginClient implements NotificationHandler {
-    private String visitorName = null;
+//    private String visitorName = null;
     private final ServerFacade server;
     private final String serverURL;
     private final String authToken;
@@ -75,8 +75,12 @@ public class PostLoginClient implements NotificationHandler {
                 case "join", "j" -> joinGame(params);
                 case "observe", "o" -> observeGame(params);
                 case "logout", "l" -> "logout";
-                default -> help();
+                case "help", "h" -> help();
+                default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
             };
+        } catch (AuthorizationException ex) {
+            System.out.print(SET_TEXT_COLOR_RED);
+            return "Sorry, you are not authorized to perform that action! Try logging out and logging back in!";
         } catch (ResponseException ex) {
             return ex.getMessage();
         }
@@ -92,6 +96,11 @@ public class PostLoginClient implements NotificationHandler {
 //                System.out.println(params[1]);
 //                System.out.println(params[2]);
                 server.createGame(new CreateGameRequest(params[0], authToken));
+            } catch (BadRequestException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return "Sorry that input was invalid. To create a game: type \"c\", \"create\" <DESIRED GAME NAME>";
+            } catch (AuthorizationException ex) {
+                throw new AuthorizationException();
             } catch (ResponseException ex) {
 //                System.out.println("in the catch");
 //                ex.printStackTrace();
@@ -99,7 +108,7 @@ public class PostLoginClient implements NotificationHandler {
             }
             return "You have successfully created the game!";
         }
-        throw new ResponseException();
+        return "Oops, you didn't input a name for your game! To create a game: type \"c\", \"create\" <DESIRED GAME NAME>";
     }
 
     public String joinGame(String... params) throws ResponseException {
@@ -107,17 +116,32 @@ public class PostLoginClient implements NotificationHandler {
 //            state = State.SIGNEDIN;
 //            visitorName = String.join("-", params);
 //            ws.enterPetShop(visitorName);
-            GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
+            String gameName;
             try {
+                GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
+                if (game == null) {
+                    return "Sorry there is no game correlating to that given number! List out the games and use the number in front of the game name to join!";
+                }
+                gameName = game.gameName();
                 server.joinGame(new JoinGameRequest(params[1].toUpperCase(), game.gameID(), authToken));
                 gameInfo.addFirst(String.valueOf(game.gameID()));
                 gameInfo.add(1, "true");
                 gameInfo.add(2, params[1].toUpperCase());
                 joinedGame = true;
+            } catch (BadRequestException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! You must specify either WHITE or BLACK as your player color and what game number you want to join!";
+            } catch (AuthorizationException ex) {
+                throw new AuthorizationException();
+            } catch (AlreadyTakenException ex) {
+                System.out.print(SET_TEXT_COLOR_RED);
+                return String.format("Aw shucks! Someone is already playing as the %s player!", (params[1].substring(0, 1).toUpperCase() + params[1].substring(1).toLowerCase()));
             } catch (ResponseException ex) {
                 throw new ResponseException();
+            } catch (NumberFormatException ex) {
+                return "Sorry, you typed in a word instead of a number! In order to join a game you need to type in its given number shown when you list the games!";
             }
-            return String.format("You have successfully joined game #%s - %s!", params[0], game.gameName());
+            return String.format("You have successfully joined game #%s - %s!", params[0], gameName);
         }
         return "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! You must specify either WHITE or BLACK as your player color and what game number you want to join!";
     }
@@ -132,11 +156,15 @@ public class PostLoginClient implements NotificationHandler {
 //            } catch (ResponseException ex) {
 //                throw new ResponseException();
 //            }
-            GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
-            gameInfo.addFirst(String.valueOf(game.gameID()));
-            gameInfo.add(1, "false");
-            gameInfo.add(2, null);
-            joinedGame = true;
+            try {
+                GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
+                gameInfo.addFirst(String.valueOf(game.gameID()));
+                gameInfo.add(1, "false");
+                gameInfo.add(2, null);
+                joinedGame = true;
+            } catch (NumberFormatException ex) {
+                return "Sorry, you typed in a word instead of a number! In order to observe a game you need to type in its given number shown when you list the games!";
+            }
             return String.format("You are successfully observing game #%s!", params[0]);
         }
         return "Sorry, to observe a game you must specify which game number you want to observe - list the games again if you don't know the number!";
@@ -156,6 +184,8 @@ public class PostLoginClient implements NotificationHandler {
                 gameDataHashMap.put(i, game);
                 i++;
             }
+        } catch (AuthorizationException ex) {
+            throw new AuthorizationException();
         } catch (ResponseException ex) {
             throw new ResponseException();
         }

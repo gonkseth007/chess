@@ -68,7 +68,7 @@ public class PreLoginClient implements NotificationHandler {
                 case "login", "l" -> login(params);
                 case "quit", "q" -> "quit";
                 case "help", "h" -> help();
-                default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"!";
+                default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
             };
         } catch (ResponseException ex) {
             System.out.print(SET_TEXT_COLOR_RED);
