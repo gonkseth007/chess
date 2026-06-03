@@ -16,17 +16,8 @@ public class ServerFacade {
     public ServerFacade(String url) { serverUrl = url; }
 
     public RegisterLoginResult register(RegisterRequest request) throws ResponseException {
-//        System.out.println("we in serverFacade register");
-//        System.out.println(request);
         var req = buildRequest("POST", "/user", request, null);
-//        System.out.println("we built the request");
-//        System.out.println(req);
-//        System.out.println(serverUrl);
-//        System.out.println(req.uri());
-//        System.out.println(req.headers().map());
         var response = sendRequest(req);
-//        System.out.println("we sent the request!");
-//        System.out.println(response);
         return handleResponse(response, RegisterLoginResult.class);
     }
 
@@ -49,18 +40,8 @@ public class ServerFacade {
     }
 
     public CreateGameResult createGame(CreateGameRequest request) throws ResponseException {
-//        System.out.println("we in serverFacade createGame");
-//        System.out.println(request);
-//        System.out.println(request.authToken());
         var req = buildRequest("POST", "/game", request, request.authToken());
-//        System.out.println("we built the request");
-//        System.out.println(req);
         var response = sendRequest(req);
-//        System.out.println("we sent the request");
-//        System.out.println(response);
-//        CreateGameResult result = handleResponse(response, CreateGameResult.class);
-//        System.out.println("we handled the response");
-//        return result;
         return handleResponse(response, CreateGameResult.class);
     }
 
@@ -82,7 +63,6 @@ public class ServerFacade {
             request.setHeader("Content-Type", "application/json");
         }
         if (header != null) {
-//            System.out.println("setting the authorization header!");
             request.setHeader("authorization", header);
         }
         return request.build();
@@ -90,9 +70,7 @@ public class ServerFacade {
 
     private BodyPublisher makeRequestBody(Object request) {
         if (request != null) {
-//            System.out.println("making the request body as json");
             String json = new Gson().toJson(request);
-//            System.out.println(json);
             return BodyPublishers.ofString(json);
         } else {
             return BodyPublishers.noBody();
@@ -110,8 +88,6 @@ public class ServerFacade {
     private <T> T handleResponse(HttpResponse<String> response, Class<T> responseClass) throws ResponseException {
         var status = response.statusCode();
         if (status / 100 != 2) {
-//            var body = response.body();
-//            if (body != null) {
             if (status == 400) {
                 throw new BadRequestException();
             } else if (status == 401) {

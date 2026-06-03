@@ -80,24 +80,7 @@ public class GameClient {
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
                 for (int j = 0; j <= 9; j++) {
-                    if (i == 0 || i == 9) {
-                        System.out.print(SET_BG_COLOR_LIGHT_GREY);
-                        System.out.print(SET_TEXT_COLOR_BLACK);
-                        if (j != 0 && j != 9) {
-                            System.out.printf(" %c ", (char)('a' + (j-1)));
-                        } else {
-                            System.out.printf(" %c ", ' ');
-                        }
-                    } else if (j == 0 || j == 9) {
-                        System.out.print(SET_BG_COLOR_LIGHT_GREY);
-                        System.out.print(SET_TEXT_COLOR_BLACK);
-                        System.out.printf(" %d ", (9-i));
-                    } else {
-                        ChessPiece piece = board.getPiece(new ChessPosition(9-i,j));
-                        printTile(board, 9-i, j);
-                    }
-                    System.out.print(RESET_TEXT_COLOR);
-                    System.out.print(RESET_BG_COLOR);
+                    printWhiteBlock(board, i, j);
                 }
                 System.out.println();
             }
@@ -116,28 +99,52 @@ public class GameClient {
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
                 for (int j = 0; j <= 9; j++) {
-                    if (i == 0 || i == 9) {
-                        System.out.print(SET_BG_COLOR_LIGHT_GREY);
-                        System.out.print(SET_TEXT_COLOR_BLACK);
-                        if (j != 0 && j != 9) {
-                            System.out.printf(" %c ", (char)('a' + (8-j)));
-                        } else {
-                            System.out.printf(" %c ", ' ');
-                        }
-                    } else if (j == 0 || j == 9) {
-                        System.out.print(SET_BG_COLOR_LIGHT_GREY);
-                        System.out.print(SET_TEXT_COLOR_BLACK);
-                        System.out.printf(" %d ", (i));
-                    } else {
-                        printTile(board, i, 9-j);
-                    }
-                    System.out.print(RESET_TEXT_COLOR);
-                    System.out.print(RESET_BG_COLOR);
+                    printBlackBlock(board, i, j);
                 }
                 System.out.println();
             }
         }
         return "";
+    }
+
+    public void printWhiteBlock(ChessBoard board, int i, int j) {
+        if (i == 0 || i == 9) {
+            System.out.print(SET_BG_COLOR_LIGHT_GREY);
+            System.out.print(SET_TEXT_COLOR_BLACK);
+            if (j != 0 && j != 9) {
+                System.out.printf(" %c ", (char)('a' + (j-1)));
+            } else {
+                System.out.printf(" %c ", ' ');
+            }
+        } else if (j == 0 || j == 9) {
+            System.out.print(SET_BG_COLOR_LIGHT_GREY);
+            System.out.print(SET_TEXT_COLOR_BLACK);
+            System.out.printf(" %d ", (9-i));
+        } else {
+            printTile(board, 9-i, j);
+        }
+        System.out.print(RESET_TEXT_COLOR);
+        System.out.print(RESET_BG_COLOR);
+    }
+
+    public void printBlackBlock(ChessBoard board, int i, int j) {
+        if (i == 0 || i == 9) {
+            System.out.print(SET_BG_COLOR_LIGHT_GREY);
+            System.out.print(SET_TEXT_COLOR_BLACK);
+            if (j != 0 && j != 9) {
+                System.out.printf(" %c ", (char)('a' + (8-j)));
+            } else {
+                System.out.printf(" %c ", ' ');
+            }
+        } else if (j == 0 || j == 9) {
+            System.out.print(SET_BG_COLOR_LIGHT_GREY);
+            System.out.print(SET_TEXT_COLOR_BLACK);
+            System.out.printf(" %d ", (i));
+        } else {
+            printTile(board, i, 9-j);
+        }
+        System.out.print(RESET_TEXT_COLOR);
+        System.out.print(RESET_BG_COLOR);
     }
 
     public void printTile(ChessBoard board, int i, int j) {

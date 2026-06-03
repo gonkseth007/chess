@@ -18,6 +18,10 @@ public class PreLoginClient {
         this.serverURL = serverURL;
     }
 
+    private void printPrompt() {
+        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
+    }
+
     public void run() {
         System.out.println(WHITE_KING + " Welcome to CHESS! Login or Register to start! (or type \"help\" to get some help)");
 
@@ -38,29 +42,6 @@ public class PreLoginClient {
                 System.out.print(SET_TEXT_COLOR_RED);
                 System.out.println("Sorry, an unexpected error occurred! Please try again!");
             }
-        }
-    }
-
-    private void printPrompt() {
-        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
-    }
-
-    public String eval(String input) {
-        try {
-            String[] tokens = input.split(" ");
-            String cmd = (tokens.length > 0) ? tokens[0] : "help";
-            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            return switch (cmd) {
-                case "register", "r" -> register(params);
-                case "login", "l" -> login(params);
-                case "quit", "q" -> "quit";
-                case "help", "h" -> help();
-                default -> "Sorry, that command isn't a real command! " +
-                        "If you need help, type in \"help\" or \"h\"";
-            };
-        } catch (ResponseException ex) {
-            System.out.print(SET_TEXT_COLOR_RED);
-            return "Sorry, an unexpected error occurred! Please try again!";
         }
     }
 
@@ -125,5 +106,24 @@ public class PreLoginClient {
                 - Quit the program: "q", "quit"
                 - Get help (this message): "h", "help"
                 """;
+    }
+
+    public String eval(String input) {
+        try {
+            String[] tokens = input.split(" ");
+            String cmd = (tokens.length > 0) ? tokens[0] : "help";
+            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
+            return switch (cmd) {
+                case "register", "r" -> register(params);
+                case "login", "l" -> login(params);
+                case "quit", "q" -> "quit";
+                case "help", "h" -> help();
+                default -> "Sorry, that command isn't a real command! " +
+                        "If you need help, type in \"help\" or \"h\"";
+            };
+        } catch (ResponseException ex) {
+            System.out.print(SET_TEXT_COLOR_RED);
+            return "Sorry, an unexpected error occurred! Please try again!";
+        }
     }
 }

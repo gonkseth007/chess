@@ -21,6 +21,10 @@ public class PostLoginClient {
         this.authToken = authToken;
     }
 
+    private void printPrompt() {
+        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
+    }
+
     public void run() {
         System.out.println("You have successfully logged in! You can now join, create, or observe games! \n" +
                 "If you need help, type \"help\" to get some help");
@@ -44,35 +48,6 @@ public class PostLoginClient {
                 System.out.print(SET_TEXT_COLOR_RED);
                 System.out.println("Sorry, an unexpected error occurred! Please try again!");
             }
-        }
-    }
-
-    private void printPrompt() {
-        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
-    }
-
-    public String eval(String input) {
-        try {
-            String[] tokens = input.split(" ");
-            String cmd = (tokens.length > 0) ? tokens[0] : "help";
-            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            return switch (cmd) {
-                case "create", "c" -> createGame(params);
-                case "list", "g" -> listGames();
-                case "join", "j" -> joinGame(params);
-                case "observe", "o" -> observeGame(params);
-                case "logout", "l" -> "logout";
-                case "help", "h" -> help();
-                default -> "Sorry, that command isn't a real command! " +
-                        "If you need help, type in \"help\" or \"h\"";
-            };
-        } catch (AuthorizationException ex) {
-            System.out.print(SET_TEXT_COLOR_RED);
-            return "Sorry, you are not authorized to perform that action! " +
-                    "Try logging out and logging back in!";
-        } catch (ResponseException ex) {
-            System.out.print(SET_TEXT_COLOR_RED);
-            return "Sorry, an unexpected error occurred! Please try again!";
         }
     }
 
@@ -183,5 +158,30 @@ public class PostLoginClient {
                 - Observe a game: "o", "observe" <ID>
                 - Get help (this message): "h", "help"
                 """;
+    }
+
+    public String eval(String input) {
+        try {
+            String[] tokens = input.split(" ");
+            String cmd = (tokens.length > 0) ? tokens[0] : "help";
+            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
+            return switch (cmd) {
+                case "create", "c" -> createGame(params);
+                case "list", "g" -> listGames();
+                case "join", "j" -> joinGame(params);
+                case "observe", "o" -> observeGame(params);
+                case "logout", "l" -> "logout";
+                case "help", "h" -> help();
+                default -> "Sorry, that command isn't a real command! " +
+                        "If you need help, type in \"help\" or \"h\"";
+            };
+        } catch (AuthorizationException ex) {
+            System.out.print(SET_TEXT_COLOR_RED);
+            return "Sorry, you are not authorized to perform that action! " +
+                    "Try logging out and logging back in!";
+        } catch (ResponseException ex) {
+            System.out.print(SET_TEXT_COLOR_RED);
+            return "Sorry, an unexpected error occurred! Please try again!";
+        }
     }
 }
