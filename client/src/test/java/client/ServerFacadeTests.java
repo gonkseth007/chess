@@ -45,7 +45,10 @@ public class ServerFacadeTests {
     @Order(2)
     void registerUserFail() throws ResponseException {
         facade.register(new RegisterRequest("gonkdroid007", "gonkdroidrules", "gonk@gonk.gonk"));
-        assertThrows(ResponseException.class, () -> facade.register(new RegisterRequest("gonkdroid007", "iforgotoldpasswordsore-registering", "gonk@gonk.droid")));
+        assertThrows(ResponseException.class, () -> facade.register(new RegisterRequest(
+                "gonkdroid007",
+                "iforgotoldpasswordsore-registering",
+                "gonk@gonk.droid")));
         assertThrows(ResponseException.class, () -> facade.register(new RegisterRequest(null, "nouserhahaimsoclever", "troll@trolls.edu")));
     }
 

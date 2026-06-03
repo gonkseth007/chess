@@ -4,15 +4,13 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
-import client.websocket.NotificationHandler;
 import model.GameData;
-import webSocketMessages.Notification;
 
 import java.util.*;
 
 import static ui.EscapeSequences.*;
 
-public class GameClient implements NotificationHandler {
+public class GameClient {
 //    private String visitorName = null;
     private final ServerFacade server;
     private final String authToken;
@@ -47,17 +45,11 @@ public class GameClient implements NotificationHandler {
         }
     }
 
-    public void notify(Notification notification) {
-        System.out.println(SET_TEXT_COLOR_RED + notification.message());
-        printPrompt();
-    }
-
     private void printPrompt() {
         System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
     }
 
     public String eval(String input) {
-//        try {
             String[] tokens = input.toLowerCase().split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
@@ -67,10 +59,6 @@ public class GameClient implements NotificationHandler {
                 case "help", "h" -> help();
                 default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
             };
-//        } catch (ResponseException ex) {
-//            System.out.print(SET_TEXT_COLOR_RED);
-//            return "Sorry, an unexpected error occurred! Please try again!";
-//        }
     }
 
     public String printBoard() throws ResponseException {
@@ -106,24 +94,7 @@ public class GameClient implements NotificationHandler {
                         System.out.printf(" %d ", (9-i));
                     } else {
                         ChessPiece piece = board.getPiece(new ChessPosition(9-i,j));
-                        ChessPiece.PieceType type;
-                        if (piece == null) {
-                            type = null;
-                        } else {
-                            type = piece.getPieceType();
-                            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                                System.out.print(SET_TEXT_COLOR_MAGENTA);
-                            } else {
-                                System.out.print(SET_TEXT_COLOR_DARK_GREEN);
-                            }
-                        }
-                        if ((i+j) % 2 == 0) {
-                            System.out.print(SET_BG_COLOR_WHITE);
-                        } else {
-                            System.out.print(SET_BG_COLOR_BLACK);
-                        }
-
-                        System.out.printf(" %c ", ChessPieceChar(type));
+                        printTile(board, 9-i, j);
                     }
                     System.out.print(RESET_TEXT_COLOR);
                     System.out.print(RESET_BG_COLOR);
@@ -158,25 +129,7 @@ public class GameClient implements NotificationHandler {
                         System.out.print(SET_TEXT_COLOR_BLACK);
                         System.out.printf(" %d ", (i));
                     } else {
-                        ChessPiece piece = board.getPiece(new ChessPosition(i,9-j));
-                        ChessPiece.PieceType type;
-                        if (piece == null) {
-                            type = null;
-                        } else {
-                            type = piece.getPieceType();
-                            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-                                System.out.print(SET_TEXT_COLOR_MAGENTA);
-                            } else {
-                                System.out.print(SET_TEXT_COLOR_DARK_GREEN);
-                            }
-                        }
-                        if ((i+j) % 2 == 0) {
-                            System.out.print(SET_BG_COLOR_WHITE);
-                        } else {
-                            System.out.print(SET_BG_COLOR_BLACK);
-                        }
-
-                        System.out.printf(" %c ", ChessPieceChar(type));
+                        printTile(board, i, 9-j);
                     }
                     System.out.print(RESET_TEXT_COLOR);
                     System.out.print(RESET_BG_COLOR);
@@ -187,7 +140,29 @@ public class GameClient implements NotificationHandler {
         return "";
     }
 
-    public char ChessPieceChar(ChessPiece.PieceType type) {
+    public void printTile(ChessBoard board, int i, int j) {
+        ChessPiece piece = board.getPiece(new ChessPosition(i,j));
+        ChessPiece.PieceType type;
+        if (piece == null) {
+            type = null;
+        } else {
+            type = piece.getPieceType();
+            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                System.out.print(SET_TEXT_COLOR_MAGENTA);
+            } else {
+                System.out.print(SET_TEXT_COLOR_DARK_GREEN);
+            }
+        }
+        if ((i+j) % 2 != 0) {
+            System.out.print(SET_BG_COLOR_WHITE);
+        } else {
+            System.out.print(SET_BG_COLOR_BLACK);
+        }
+
+        System.out.printf(" %c ", chessPieceChar(type));
+    }
+
+    public char chessPieceChar(ChessPiece.PieceType type) {
         return switch (type) {
             case ChessPiece.PieceType.QUEEN -> 'Q';
             case ChessPiece.PieceType.KING -> 'K';
