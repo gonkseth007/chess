@@ -4,10 +4,7 @@ import client.websocket.NotificationHandler;
 import model.*;
 import webSocketMessages.Notification;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 import static ui.EscapeSequences.*;
 
@@ -19,6 +16,8 @@ public class PostLoginClient implements NotificationHandler {
     private final String serverURL;
     private final String authToken;
     private final HashMap<Integer, GameData> gameDataHashMap = new HashMap<>();
+    private Boolean joinedGame = false;
+    private ArrayList<String> gameInfo = new ArrayList<>();
 //    private final WebSocketFacade ws;
 //    private State state = State.SIGNEDOUT;
 
@@ -42,6 +41,11 @@ public class PostLoginClient implements NotificationHandler {
                 result = eval(line);
 //                System.out.println("result gotten and it below!");
                 System.out.println(SET_TEXT_COLOR_BLUE + result);
+                if (joinedGame) {
+                    new GameClient(serverURL, authToken, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
+                    joinedGame = false;
+                    gameInfo.clear();
+                }
 
             } catch (Throwable e) {
                 var msg = e.toString();
@@ -106,10 +110,14 @@ public class PostLoginClient implements NotificationHandler {
             GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
             try {
                 server.joinGame(new JoinGameRequest(params[1].toUpperCase(), game.gameID(), authToken));
+                gameInfo.addFirst(String.valueOf(game.gameID()));
+                gameInfo.add(1, "true");
+                gameInfo.add(2, params[1].toUpperCase());
+                joinedGame = true;
             } catch (ResponseException ex) {
                 throw new ResponseException();
             }
-            return String.format("You have successfully joined game #%s. %s!", params[0], game.gameName());
+            return String.format("You have successfully joined game #%s - %s!", params[0], game.gameName());
         }
         return "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! You must specify either WHITE or BLACK as your player color and what game number you want to join!";
     }
@@ -124,6 +132,11 @@ public class PostLoginClient implements NotificationHandler {
 //            } catch (ResponseException ex) {
 //                throw new ResponseException();
 //            }
+            GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
+            gameInfo.addFirst(String.valueOf(game.gameID()));
+            gameInfo.add(1, "false");
+            gameInfo.add(2, null);
+            joinedGame = true;
             return String.format("You are successfully observing game #%s!", params[0]);
         }
         return "Sorry, to observe a game you must specify which game number you want to observe - list the games again if you don't know the number!";
@@ -156,7 +169,7 @@ public class PostLoginClient implements NotificationHandler {
                 - Create a new game: "c", "create" <NAME>
                 - List all the games: "g", "list"
                 - Join to play a game: "j", "join" <ID> [WHITE|BLACK]
-                - Spectate a game: "s", "spectate" <ID>
+                - Observe a game: "o", "observe" <ID>
                 - Get help (this message): "h", "help"
                 """;
     }

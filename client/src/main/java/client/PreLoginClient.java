@@ -37,7 +37,9 @@ public class PreLoginClient implements NotificationHandler {
                 result = eval(line);
 //                System.out.println("result gotten and it below!");
                 System.out.println(SET_TEXT_COLOR_BLUE + result);
-                if (authToken != null) new PostLoginClient(serverURL, authToken).run();
+                if (authToken != null) {
+                    new PostLoginClient(serverURL, authToken).run();
+                }
                 authToken = null;
             } catch (Throwable e) {
                 var msg = e.toString();
