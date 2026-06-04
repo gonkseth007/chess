@@ -93,7 +93,7 @@ public class ServerFacade {
             } else if (status == 401) {
                 throw new AuthorizationException();
             } else if (status == 403) {
-                throw new BadRequestException();
+                throw new AlreadyTakenException();
             }
             throw new ResponseException();
         }

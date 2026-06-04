@@ -136,7 +136,15 @@ public class PostLoginClient {
             Collection<GameData> games = result.games();
             int i = 1;
             for (GameData game : games) {
-                listedGamesDisplay.append(String.format("%d. %s\n", i, game.gameName()));
+                String whitePlayer = game.whiteUsername();
+                if (whitePlayer == null) {
+                    whitePlayer = "no one";
+                }
+                String blackPlayer = game.blackUsername();
+                if (blackPlayer == null) {
+                    blackPlayer = "no one";
+                }
+                listedGamesDisplay.append(String.format("%d. %s - White Player: %s, Black Player: %s \n", i, game.gameName(), whitePlayer, blackPlayer));
                 gameDataHashMap.put(i, game);
                 i++;
             }
