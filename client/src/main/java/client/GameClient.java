@@ -49,16 +49,49 @@ public class GameClient {
         System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
     }
 
-    public String eval(String input) {
+    public String eval(String input) throws ResponseException {
             String[] tokens = input.toLowerCase().split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            return switch (cmd) {
-//                case "show", "s" -> printBoard();
-                case "quit", "q" -> "quit";
-                case "help", "h" -> help();
-                default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
-            };
+            if (isPlaying) {
+                return switch (cmd) {
+                    case "show", "s" -> printBoard();
+                    case "move", "m" -> makeMove();
+                    case "highlight", "t" -> highlightMoves();
+                    case "leave", "l" -> leaveGame();
+                    case "resign", "r" -> resignFromGame();
+                    case "help", "h" -> help();
+                    default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
+                };
+            } else {
+                return switch (cmd) {
+                    case "show", "s" -> printBoard();
+                    case "leave", "l" -> "quit";
+                    case "help", "h" -> observerHelp();
+                    default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
+                };
+            }
+
+    }
+
+    public String highlightMoves() {
+        return "Here's the legal moves for that piece!";
+    }
+
+    public String makeMove() {
+        return "You've made that move";
+    }
+
+    public String leaveGame() {
+        return "quit";
+    }
+
+    public String resignFromGame() {
+        if (Objects.equals(this.playerColor, "WHITE")) {
+            return "You have resigned from the game and black wins!";
+        } else {
+            return "You have resigned from the game and white wins!";
+        }
     }
 
     public String printBoard() throws ResponseException {
@@ -70,12 +103,10 @@ public class GameClient {
     }
 
     public String printWhiteBoard() throws ResponseException {
-        Collection<GameData> games = server.listGames(authToken).games();
+        ChessGame game = getChessGame();
         ChessBoard board = null;
-        for (GameData game : games) {
-            if (game.gameID() == gameID) {
-                board = game.game().getBoard();
-            }
+        if (game != null) {
+            board = getChessGame().getBoard();
         }
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
@@ -89,12 +120,10 @@ public class GameClient {
     }
 
     public String printBlackBoard() throws ResponseException {
-        Collection<GameData> games = server.listGames(authToken).games();
+        ChessGame game = getChessGame();
         ChessBoard board = null;
-        for (GameData game : games) {
-            if (game.gameID() == gameID) {
-                board = game.game().getBoard();
-            }
+        if (game != null) {
+            board = getChessGame().getBoard();
         }
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
@@ -181,12 +210,35 @@ public class GameClient {
         };
     }
 
+    public ChessGame getChessGame() throws ResponseException {
+        Collection<GameData> games = server.listGames(authToken).games();
+        for (GameData game : games) {
+            if (game.gameID() == gameID) {
+                return game.game();
+            }
+        }
+        return null;
+    }
+
     public String help() {
         return """
                 Options:
-                - Quit the game: "q", "quit"
+                - Display the board again: "s", "show"
+                - Make a move: "m", "move" <START POSITION> <END POSITION>
+                - Highlight legal moves: "t", "highlight" <PIECE POSITION>
+                - Resign from the game: "r", "resign"
+                - Leave the game: "l", "leave"
                 - Get help (this message): "h", "help"
                 """;
 //                - Display the board again: "s", "show"
+    }
+
+    public String observerHelp() {
+        return """
+                Options:
+                - Display the board again: "s", "show"
+                - Leave the game: "l", "leave"
+                - Get help (this message): "h", "help"
+                """;
     }
 }

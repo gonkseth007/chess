@@ -37,7 +37,11 @@ public class PostLoginClient {
 
             try {
                 result = eval(line);
-                System.out.println(SET_TEXT_COLOR_BLUE + result);
+                if (Objects.equals(result, "logout")) {
+                    System.out.println(SET_TEXT_COLOR_BLUE + "You have successfully logged out!");
+                } else {
+                    System.out.println(SET_TEXT_COLOR_BLUE + result);
+                }
                 if (joinedGame) {
                     new GameClient(serverURL, authToken, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
                     joinedGame = false;
@@ -156,6 +160,17 @@ public class PostLoginClient {
         return listedGamesDisplay.toString();
     }
 
+    public String logout() throws ResponseException {
+        try {
+            server.logout(authToken);
+        } catch (AuthorizationException ex) {
+            throw new AuthorizationException();
+        } catch (ResponseException ex) {
+            throw new ResponseException();
+        }
+        return "logout";
+    }
+
     public String help() {
         return """
                 Options:
@@ -178,7 +193,7 @@ public class PostLoginClient {
                 case "list", "g" -> listGames();
                 case "join", "j" -> joinGame(params);
                 case "observe", "o" -> observeGame(params);
-                case "logout", "l" -> "logout";
+                case "logout", "l" -> logout();
                 case "help", "h" -> help();
                 default -> "Sorry, that command isn't a real command! " +
                         "If you need help, type in \"help\" or \"h\"";
