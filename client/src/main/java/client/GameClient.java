@@ -1,9 +1,6 @@
 package client;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 import model.GameData;
 
 import java.util.*;
@@ -56,8 +53,8 @@ public class GameClient {
             if (isPlaying) {
                 return switch (cmd) {
                     case "show", "s" -> printBoard();
-                    case "move", "m" -> makeMove();
-                    case "highlight", "t" -> highlightMoves();
+                    case "move", "m" -> makeMove(params[0], params[1]);
+                    case "highlight", "t" -> highlightMoves(params[0]);
                     case "leave", "l" -> leaveGame();
                     case "resign", "r" -> resignFromGame();
                     case "help", "h" -> help();
@@ -74,12 +71,37 @@ public class GameClient {
 
     }
 
-    public String highlightMoves() {
+    public String highlightMoves(String position) {
         return "Here's the legal moves for that piece!";
     }
 
-    public String makeMove() {
-        return "You've made that move";
+    public String makeMove(String startPosition, String endPosition) {
+        if (startPosition.length() != 2 || endPosition.length() != 2) {
+            return "Sorry, one or both of those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+        }
+        try {
+            int startX = startPosition.charAt(0) - 'a' + 1;
+            int startY = Character.getNumericValue(startPosition.charAt(1));
+            int endX = endPosition.charAt(0) - 'a' + 1;
+            int endY = Character.getNumericValue(endPosition.charAt(1));
+            if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
+                return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+            }
+            GameData gameData = getGameData();
+            ChessGame game = gameData.game();
+            ChessPiece piece = game.getBoard().getPiece(new ChessPosition(startX, startY));
+            ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, startY);
+            game.makeMove(new ChessMove(
+                    new ChessPosition (startX, startY),
+                    new ChessPosition (endX, endY),
+                    promotionPiece
+            ));
+            return "You've made that move";
+        } catch (ResponseException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidMoveException e) {
+            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
+        }
     }
 
     public String leaveGame() {
@@ -103,10 +125,10 @@ public class GameClient {
     }
 
     public String printWhiteBoard() throws ResponseException {
-        ChessGame game = getChessGame();
+        ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
-            board = getChessGame().getBoard();
+            board = game.getBoard();
         }
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
@@ -120,10 +142,10 @@ public class GameClient {
     }
 
     public String printBlackBoard() throws ResponseException {
-        ChessGame game = getChessGame();
+        ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
-            board = getChessGame().getBoard();
+            board = game.getBoard();
         }
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
@@ -210,11 +232,34 @@ public class GameClient {
         };
     }
 
-    public ChessGame getChessGame() throws ResponseException {
+    public GameData getGameData() throws ResponseException {
         Collection<GameData> games = server.listGames(authToken).games();
         for (GameData game : games) {
             if (game.gameID() == gameID) {
-                return game.game();
+                return game;
+            }
+        }
+        return null;
+    }
+
+    public ChessPiece.PieceType getPromotionPiece(ChessPiece piece, int startY) {
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE && startY == 8) {
+                Scanner scanner = new Scanner(System.in);
+                String promotionPiece = "";
+                while (!promotionPiece.equals("QUEEN") && !promotionPiece.equals("ROOK") && !promotionPiece.equals("KNIGHT") && !promotionPiece.equals("BISHOP")) {
+                    System.out.println(SET_TEXT_COLOR_GREEN + pawnPromotionPrompt());
+                    promotionPiece = scanner.nextLine().toUpperCase();
+                }
+                return ChessPiece.PieceType.valueOf(promotionPiece);
+            } else if (piece.getTeamColor() == ChessGame.TeamColor.BLACK && startY == 1) {
+                Scanner scanner = new Scanner(System.in);
+                String promotionPiece = "";
+                while (!promotionPiece.equals("QUEEN") && !promotionPiece.equals("ROOK") && !promotionPiece.equals("KNIGHT") && !promotionPiece.equals("BISHOP")) {
+                    System.out.println(SET_TEXT_COLOR_GREEN + pawnPromotionPrompt());
+                    promotionPiece = scanner.nextLine().toUpperCase();
+                }
+                return ChessPiece.PieceType.valueOf(promotionPiece);
             }
         }
         return null;
@@ -230,7 +275,6 @@ public class GameClient {
                 - Leave the game: "l", "leave"
                 - Get help (this message): "h", "help"
                 """;
-//                - Display the board again: "s", "show"
     }
 
     public String observerHelp() {
@@ -239,6 +283,16 @@ public class GameClient {
                 - Display the board again: "s", "show"
                 - Leave the game: "l", "leave"
                 - Get help (this message): "h", "help"
+                """;
+    }
+
+    public String pawnPromotionPrompt() {
+        return """
+                Please enter in the piece you'd like to promote your pawn to!
+                - Queen
+                - Rook
+                - Knight
+                - Bishop
                 """;
     }
 }
