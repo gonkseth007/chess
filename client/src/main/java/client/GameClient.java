@@ -1,6 +1,7 @@
 package client;
 
 import chess.*;
+import client.websocket.WebSocketFacade;
 import model.GameData;
 
 import java.util.*;
@@ -10,13 +11,15 @@ import static ui.EscapeSequences.*;
 public class GameClient {
 //    private String visitorName = null;
     private final ServerFacade server;
+    private final WebSocketFacade ws;
     private final String authToken;
     private final Integer gameID;
     private final boolean isPlaying;
     private final String playerColor;
 
-    public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) {
+    public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
         server = new ServerFacade(serverURL);
+        ws = new WebSocketFacade(serverURL);
         this.authToken = authToken;
         this.gameID = gameID;
         this.isPlaying = isPlaying;
