@@ -11,14 +11,16 @@ public class PostLoginClient {
     private final ServerFacade server;
     private final String serverURL;
     private final String authToken;
+    private final String username;
     private final HashMap<Integer, GameData> gameDataHashMap = new HashMap<>();
     private Boolean joinedGame = false;
     private final ArrayList<String> gameInfo = new ArrayList<>();
 
-    public PostLoginClient(String serverURL, String authToken) {
+    public PostLoginClient(String serverURL, String authToken, String username) {
         server = new ServerFacade(serverURL);
         this.serverURL = serverURL;
         this.authToken = authToken;
+        this.username = username;
     }
 
     private void printPrompt() {
@@ -43,7 +45,7 @@ public class PostLoginClient {
                     System.out.println(SET_TEXT_COLOR_BLUE + result);
                 }
                 if (joinedGame) {
-                    new GameClient(serverURL, authToken, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
+                    new GameClient(serverURL, authToken, username, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
                     joinedGame = false;
                     gameInfo.clear();
                 }

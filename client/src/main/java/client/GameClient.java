@@ -1,32 +1,41 @@
 package client;
 
 import chess.*;
+import client.websocket.ServerMessageHandler;
 import client.websocket.WebSocketFacade;
 import model.GameData;
+import websocket.messages.ServerMessage;
 
 import java.util.*;
 
 import static ui.EscapeSequences.*;
 
-public class GameClient {
+public class GameClient implements ServerMessageHandler {
 //    private String visitorName = null;
     private final ServerFacade server;
     private final WebSocketFacade ws;
     private final String authToken;
+    private final String username;
     private final Integer gameID;
     private final boolean isPlaying;
     private final String playerColor;
 
-    public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
+    public GameClient(String serverURL, String authToken, String username, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
+//        System.out.println("so we in class declaration of GameClient");
         server = new ServerFacade(serverURL);
-        ws = new WebSocketFacade(serverURL);
+//        System.out.println("got the server");
+        ws = new WebSocketFacade(serverURL, this);
+//        System.out.println("got the web socket facade!");
         this.authToken = authToken;
+        this.username = username;
         this.gameID = gameID;
         this.isPlaying = isPlaying;
         this.playerColor = playerColor;
     }
 
     public void run() throws ResponseException {
+//        System.out.println("we in GameClient!");
+        ws.connectToGame(authToken, gameID);
         printBoard();
         Scanner scanner = new Scanner(System.in);
         String result = "";
@@ -43,6 +52,14 @@ public class GameClient {
                 System.out.println("Sorry, an unexpected error occurred! Please try again!");
             }
         }
+    }
+
+    public void notify(ServerMessage message) throws ResponseException {
+//        System.out.println("we in notify function of GameClient!");
+        if (message.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
+        }
+        printPrompt();
     }
 
     private void printPrompt() {
@@ -66,7 +83,7 @@ public class GameClient {
             } else {
                 return switch (cmd) {
                     case "show", "s" -> printBoard();
-                    case "leave", "l" -> "quit";
+                    case "leave", "l" -> leaveGame();
                     case "help", "h" -> observerHelp();
                     default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
                 };
@@ -108,6 +125,7 @@ public class GameClient {
     }
 
     public String leaveGame() {
+        ws.leaveGame(authToken, gameID);
         return "quit";
     }
 
@@ -120,6 +138,7 @@ public class GameClient {
     }
 
     public String printBoard() throws ResponseException {
+//        System.out.println("we about to print the board in GameClient!");
         if (!this.isPlaying || Objects.equals(this.playerColor, "WHITE")) {
             return printWhiteBoard();
         } else {
@@ -128,6 +147,7 @@ public class GameClient {
     }
 
     public String printWhiteBoard() throws ResponseException {
+//        System.out.println("printing the white board!");
         ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
@@ -145,6 +165,7 @@ public class GameClient {
     }
 
     public String printBlackBoard() throws ResponseException {
+//        System.out.println("printing the black board!");
         ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
