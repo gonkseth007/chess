@@ -20,7 +20,7 @@ public class Server {
     private final GameService gService;
 
     public Server() {
-        webSocketHandler = new WebSocketHandler();
+
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
@@ -28,6 +28,7 @@ public class Server {
         UserDataAccess userDAO = new MySqlUserDataAccess();
         AuthDataAccess authDAO = new MySqlAuthDataAccess();
         GameDataAccess gameDAO = new MySqlGameDataAccess();
+        webSocketHandler = new WebSocketHandler(authDAO, userDAO, gameDAO);
         uService = new UserService(userDAO, authDAO);
         cService = new ClearService(authDAO, userDAO, gameDAO);
         gService = new GameService(authDAO, gameDAO);
