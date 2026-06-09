@@ -56,8 +56,11 @@ public class GameClient implements ServerMessageHandler {
 
     public void notify(ServerMessage message) throws ResponseException {
 //        System.out.println("we in notify function of GameClient!");
+        System.out.println();
         if (message.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
             System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
+        } else if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+            printBoard();
         }
         printPrompt();
     }
@@ -96,32 +99,34 @@ public class GameClient implements ServerMessageHandler {
     }
 
     public String makeMove(String startPosition, String endPosition) {
-        if (startPosition.length() != 2 || endPosition.length() != 2) {
-            return "Sorry, one or both of those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
-        }
-        try {
-            int startX = startPosition.charAt(0) - 'a' + 1;
-            int startY = Character.getNumericValue(startPosition.charAt(1));
-            int endX = endPosition.charAt(0) - 'a' + 1;
-            int endY = Character.getNumericValue(endPosition.charAt(1));
-            if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
-                return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
-            }
-            GameData gameData = getGameData();
-            ChessGame game = gameData.game();
-            ChessPiece piece = game.getBoard().getPiece(new ChessPosition(startX, startY));
-            ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, startY);
-            game.makeMove(new ChessMove(
-                    new ChessPosition (startX, startY),
-                    new ChessPosition (endX, endY),
-                    promotionPiece
-            ));
-            return "You've made that move";
-        } catch (ResponseException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidMoveException e) {
-            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
-        }
+        ws.makeMove(authToken, gameID);
+        return "move made!";
+//        if (startPosition.length() != 2 || endPosition.length() != 2) {
+//            return "Sorry, one or both of those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+//        }
+//        try {
+//            int startX = startPosition.charAt(0) - 'a' + 1;
+//            int startY = Character.getNumericValue(startPosition.charAt(1));
+//            int endX = endPosition.charAt(0) - 'a' + 1;
+//            int endY = Character.getNumericValue(endPosition.charAt(1));
+//            if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
+//                return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+//            }
+//            GameData gameData = getGameData();
+//            ChessGame game = gameData.game();
+//            ChessPiece piece = game.getBoard().getPiece(new ChessPosition(startX, startY));
+//            ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, startY);
+//            game.makeMove(new ChessMove(
+//                    new ChessPosition (startX, startY),
+//                    new ChessPosition (endX, endY),
+//                    promotionPiece
+//            ));
+//            return "You've made that move";
+//        } catch (ResponseException e) {
+//            throw new RuntimeException(e);
+//        } catch (InvalidMoveException e) {
+//            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
+//        }
     }
 
     public String leaveGame() {

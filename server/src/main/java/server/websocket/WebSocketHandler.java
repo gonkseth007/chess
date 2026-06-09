@@ -63,10 +63,10 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     private void makeMove(String authToken, Session session) throws IOException {
-//        var message = String.format("%s left the shop", visitorName);
-//        var notification = new Notification(Notification.Type.DEPARTURE, message);
-//        connections.broadcast(session, notification);
-//        connections.remove(session);
+        var message = "bout to print the board fr fr";
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message);
+        connections.broadcast(session, notification);
+        connections.remove(session);
     }
 
     private void leave(String authToken,/*String username, boolean isPlaying, String playerColor,*/ Session session) throws IOException {
