@@ -1,6 +1,7 @@
 package client.websocket;
 
 import chess.*;
+import client.AuthorizationException;
 import client.ResponseException;
 import com.google.gson.Gson;
 import jakarta.websocket.*;
@@ -74,7 +75,7 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    public void makeMove(String authToken, int gameID, String ... params) throws InvalidMoveException {
+    public void makeMove(String authToken, int gameID, String ... params) throws InvalidMoveException, AuthorizationException {
         //            System.out.println("we are in leaveGame of WebSocketFacade!");
         try {
             if (params[0].length() != 2 || params[1].length() != 2) {
@@ -87,12 +88,19 @@ public class WebSocketFacade extends Endpoint {
             if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
                 throw new InvalidMovePositionsException();
             }
-            var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID, new ChessMoveRequest(
-                    new ChessMove(new ChessPosition(startY, startX), new ChessPosition(endY, endX), null)));
+            var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID,
+                    new ChessMove(
+                            new ChessPosition(startY, startX),
+                            new ChessPosition(endY, endX),
+                            null));
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch (InvalidMovePositionsException ex) {
+            throw new InvalidMovePositionsException();
         } catch (InvalidMoveException e) {
             throw new InvalidMoveException();
 //            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
+//        } catch (AuthorizationException ex)  {
+//            throw new AuthorizationException();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

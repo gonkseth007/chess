@@ -11,7 +11,6 @@ import io.javalin.websocket.WsConnectHandler;
 import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
 import model.AuthData;
-import model.ChessMoveRequest;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.UserGameCommand;
@@ -76,27 +75,28 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         }  else {
             message = String.format("%s began observing the game", auth.username());
         }
-        connections.add(session);
+        connections.add(session, gameID);
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
 //        System.out.println("we are broadcasting the message from leave function of WebSocketHandler!");
-        connections.broadcast(session, notification);
+        connections.broadcast(session, gameID, notification);
     }
 
-    private void makeMove(String authToken, int gameID, ChessMoveRequest req, Session session) throws IOException, DataAccessException, InvalidMoveException {
+    private void makeMove(String authToken, int gameID, ChessMove req, Session session) throws IOException, DataAccessException, InvalidMoveException {
         AuthData auth = authDAO.getAuth(authToken);
         if (auth == null) {
-            String message = "Oops you aren't authorized to do that! Try logging in again!";
-            var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR, message);
-            connections.broadcast(session, notification);
+//            String message = "Oops you aren't authorized to do that! Try logging in again!";
+//            var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR, message);
+//            connections.broadcast(session, gameID, notification);
+            throw new AuthorizationException();
         }
         GameData gameData = gameDAO.getGame(gameID);
         ChessGame game = gameData.game();
         game.getBoard();
-        ChessPiece piece = game.getBoard().getPiece(req.move().getStartPosition());
-        ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, req.move().getEndPosition().getRow());
+        ChessPiece piece = game.getBoard().getPiece(req.getStartPosition());
+        ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, req.getEndPosition().getRow());
         game.makeMove(new ChessMove(
-                req.move().getStartPosition(),
-                req.move().getEndPosition(),
+                req.getStartPosition(),
+                req.getEndPosition(),
                 promotionPiece
         ));
         gameDAO.updateGame(new GameData(
@@ -111,13 +111,13 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         var message = String.format("%s moved %s from %c%d to %c%d",
                 auth.username(),
                 pieceType,
-                (char) req.move().getStartPosition().getColumn() + 'a',
-                req.move().getStartPosition().getRow(),
-                (char)req.move().getEndPosition().getColumn() + 'a',
-                req.move().getEndPosition().getRow()
+                (char) req.getStartPosition().getColumn() + 'a' - 1,
+                req.getStartPosition().getRow(),
+                (char)req.getEndPosition().getColumn() + 'a' - 1,
+                req.getEndPosition().getRow()
         );
         var notification = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message);
-        connections.broadcast(session, notification);
+        connections.broadcast(session, gameID, notification);
     }
 
     private void leave(String authToken, int gameID, /*String username, boolean isPlaying, String playerColor,*/ Session session) throws IOException, DataAccessException {
@@ -138,7 +138,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         }
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
 //        System.out.println("we are broadcasting the message from leave function of WebSocketHandler!");
-        connections.broadcast(session, notification);
+        connections.broadcast(session, gameID, notification);
         connections.remove(session);
     }
 
