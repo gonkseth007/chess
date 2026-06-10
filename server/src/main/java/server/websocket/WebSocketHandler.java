@@ -84,12 +84,19 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private void makeMove(String authToken, int gameID, ChessMove req, Session session) throws IOException, DataAccessException, InvalidMoveException {
         AuthData auth = authDAO.getAuth(authToken);
         if (auth == null) {
-//            String message = "Oops you aren't authorized to do that! Try logging in again!";
+            String message = "Oops you aren't authorized to do that! Try logging in again!";
 //            var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR, message);
 //            connections.broadcast(session, gameID, notification);
-            throw new AuthorizationException();
+            connections.broadcastBack(session, new ServerMessage(ServerMessage.ServerMessageType.ERROR, message));
+            return;
         }
         GameData gameData = gameDAO.getGame(gameID);
+        ChessGame.TeamColor teamColor = null;
+        if (Objects.equals(gameData.whiteUsername(), auth.username())) {
+            teamColor = ChessGame.TeamColor.BLACK;
+        } else if (Objects.equals(gameData.blackUsername(), auth.username())) {
+            teamColor = ChessGame.TeamColor.WHITE;
+        }
         ChessGame game = gameData.game();
         game.getBoard();
         ChessPiece piece = game.getBoard().getPiece(req.getStartPosition());
@@ -108,6 +115,40 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         ));
         String pieceType = piece.getPieceType().toString();
         pieceType = pieceType.substring(0,1).toUpperCase() + pieceType.substring(1).toLowerCase();
+        if (game.isInCheckmate(teamColor)) {
+            String message = String.format("Checkmate! %s moved %s from %c%d to %c%d and has won the game!",
+                    auth.username(),
+                    pieceType,
+                    (char) req.getStartPosition().getColumn() + 'a' - 1,
+                    req.getStartPosition().getRow(),
+                    (char)req.getEndPosition().getColumn() + 'a' - 1,
+                    req.getEndPosition().getRow()
+            );
+            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message));
+            return;
+        } else if (game.isInStalemate(teamColor)) {
+            String message = String.format("Drats its a stalemate! %s moved %s from %c%d to %c%d",
+                    auth.username(),
+                    pieceType,
+                    (char) req.getStartPosition().getColumn() + 'a' - 1,
+                    req.getStartPosition().getRow(),
+                    (char)req.getEndPosition().getColumn() + 'a' - 1,
+                    req.getEndPosition().getRow()
+            );
+            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message));
+            return;
+        } else if (game.isInCheck(teamColor)) {
+            String message = String.format("Check! %s moved %s from %c%d to %c%d",
+                    auth.username(),
+                    pieceType,
+                    (char) req.getStartPosition().getColumn() + 'a' - 1,
+                    req.getStartPosition().getRow(),
+                    (char)req.getEndPosition().getColumn() + 'a' - 1,
+                    req.getEndPosition().getRow()
+
+            );
+            return;
+        }
         var message = String.format("%s moved %s from %c%d to %c%d",
                 auth.username(),
                 pieceType,

@@ -112,11 +112,13 @@ public class GameClient implements ServerMessageHandler {
             } catch (InvalidMovePositionsException ex) {
                 return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
             } catch (InvalidMoveException e) {
-                throw new RuntimeException(e);
+                return "Sorry that move wasn't valid!";
+            } catch (AuthorizationException e) {
+                return "Sorry you aren't authorized to do that... try logging in again?";
             }
 
         }
-        return "Oops, you forgot something! You must enter in a valid start position and end position (e.g. \"move A2, A3\")";
+        return "Oops, you forgot something! You must enter in a valid start position and end position (e.g. \"move A2 A3\")";
 //        if (startPosition.length() != 2 || endPosition.length() != 2) {
 //            return "Sorry, one or both of those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
 //        }

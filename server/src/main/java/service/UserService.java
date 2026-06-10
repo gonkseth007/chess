@@ -56,8 +56,6 @@ public class UserService {
 
     public void logout(String token) throws DataAccessException {
         AuthData auth = aDataAccess.getAuth(token);
-        System.out.print("we are in logout and auth is ");
-        System.out.println(auth);
         if (auth == null) {
             throw new AuthorizationException();
         }

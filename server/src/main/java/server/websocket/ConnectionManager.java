@@ -31,4 +31,11 @@ public class ConnectionManager {
             }
         }
     }
+
+    public void broadcastBack(Session session, ServerMessage message) throws IOException {
+        String msg = message.toString();
+        if (session.isOpen()) {
+            session.getRemote().sendString(msg);
+        }
+    }
 }
