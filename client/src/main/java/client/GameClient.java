@@ -3,7 +3,10 @@ package client;
 import chess.*;
 import client.websocket.ServerMessageHandler;
 import client.websocket.WebSocketFacade;
+import com.google.gson.Gson;
+import model.ChessMoveRequest;
 import model.GameData;
+import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
 import java.util.*;
@@ -61,6 +64,9 @@ public class GameClient implements ServerMessageHandler {
             System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
         } else if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
             printBoard();
+            System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
+        } else {
+            System.out.println(SET_TEXT_COLOR_RED + message.getMessage());
         }
         printPrompt();
     }
@@ -76,8 +82,8 @@ public class GameClient implements ServerMessageHandler {
             if (isPlaying) {
                 return switch (cmd) {
                     case "show", "s" -> printBoard();
-                    case "move", "m" -> makeMove(params[0], params[1]);
-                    case "highlight", "t" -> highlightMoves(params[0]);
+                    case "move", "m" -> makeMove(params);
+                    case "highlight", "t" -> highlightMoves(params);
                     case "leave", "l" -> leaveGame();
                     case "resign", "r" -> resignFromGame();
                     case "help", "h" -> help();
@@ -94,13 +100,23 @@ public class GameClient implements ServerMessageHandler {
 
     }
 
-    public String highlightMoves(String position) {
+    public String highlightMoves(String... params) {
         return "Here's the legal moves for that piece!";
     }
 
-    public String makeMove(String startPosition, String endPosition) {
-        ws.makeMove(authToken, gameID);
-        return "move made!";
+    public String makeMove(String... params) {
+        if (params.length > 1) {
+            try {
+                ws.makeMove(authToken, gameID, params);
+                return "move made!";
+            } catch (InvalidMovePositionsException ex) {
+                return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+            } catch (InvalidMoveException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+        return "Oops, you forgot something! You must enter in a valid start position and end position (e.g. \"move A2, A3\")";
 //        if (startPosition.length() != 2 || endPosition.length() != 2) {
 //            return "Sorry, one or both of those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
 //        }
@@ -266,29 +282,6 @@ public class GameClient implements ServerMessageHandler {
         for (GameData game : games) {
             if (game.gameID() == gameID) {
                 return game;
-            }
-        }
-        return null;
-    }
-
-    public ChessPiece.PieceType getPromotionPiece(ChessPiece piece, int startY) {
-        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE && startY == 8) {
-                Scanner scanner = new Scanner(System.in);
-                String promotionPiece = "";
-                while (!promotionPiece.equals("QUEEN") && !promotionPiece.equals("ROOK") && !promotionPiece.equals("KNIGHT") && !promotionPiece.equals("BISHOP")) {
-                    System.out.println(SET_TEXT_COLOR_GREEN + pawnPromotionPrompt());
-                    promotionPiece = scanner.nextLine().toUpperCase();
-                }
-                return ChessPiece.PieceType.valueOf(promotionPiece);
-            } else if (piece.getTeamColor() == ChessGame.TeamColor.BLACK && startY == 1) {
-                Scanner scanner = new Scanner(System.in);
-                String promotionPiece = "";
-                while (!promotionPiece.equals("QUEEN") && !promotionPiece.equals("ROOK") && !promotionPiece.equals("KNIGHT") && !promotionPiece.equals("BISHOP")) {
-                    System.out.println(SET_TEXT_COLOR_GREEN + pawnPromotionPrompt());
-                    promotionPiece = scanner.nextLine().toUpperCase();
-                }
-                return ChessPiece.PieceType.valueOf(promotionPiece);
             }
         }
         return null;

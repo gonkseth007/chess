@@ -1,8 +1,11 @@
 package client.websocket;
 
+import chess.*;
 import client.ResponseException;
 import com.google.gson.Gson;
 import jakarta.websocket.*;
+import model.ChessMoveRequest;
+import model.GameData;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
@@ -64,28 +67,42 @@ public class WebSocketFacade extends Endpoint {
 
     public void connectToGame(String authToken, int gameID) throws ResponseException {
         try {
-            var command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID);
+            var command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID, null);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException e) {
             throw new ResponseException();
         }
     }
 
-    public void makeMove(String authToken, int gameID) {
+    public void makeMove(String authToken, int gameID, String ... params) throws InvalidMoveException {
+        //            System.out.println("we are in leaveGame of WebSocketFacade!");
         try {
-//            System.out.println("we are in leaveGame of WebSocketFacade!");
-            var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID);
+            if (params[0].length() != 2 || params[1].length() != 2) {
+                throw new InvalidMovePositionsException();
+            }
+            int startX = params[0].charAt(0) - 'a' + 1;
+            int startY = Character.getNumericValue(params[0].charAt(1));
+            int endX = params[1].charAt(0) - 'a' + 1;
+            int endY = Character.getNumericValue(params[1].charAt(1));
+            if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
+                throw new InvalidMovePositionsException();
+            }
+            var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID, new ChessMoveRequest(
+                    new ChessMove(new ChessPosition(startY, startX), new ChessPosition(endY, endX), null)));
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
-//            System.out.println("we sent the leaveGame command to the session!");
+        } catch (InvalidMoveException e) {
+            throw new InvalidMoveException();
+//            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        //            System.out.println("we sent the leaveGame command to the session!");
     }
 
     public void leaveGame(String authToken, int gameID) {
         try {
 //            System.out.println("we are in leaveGame of WebSocketFacade!");
-            var command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameID);
+            var command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameID, null);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
 //            System.out.println("we sent the leaveGame command to the session!");
         } catch (IOException e) {
