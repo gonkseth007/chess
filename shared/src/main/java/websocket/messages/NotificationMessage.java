@@ -11,21 +11,16 @@ import java.util.Objects;
  * Note: You can add to this class, but you should not alter the existing
  * methods.
  */
-public class ServerMessage {
-    ServerMessageType serverMessageType;
+public class NotificationMessage extends ServerMessage {
+    String message;
 
-    public enum ServerMessageType {
-        LOAD_GAME,
-        ERROR,
-        NOTIFICATION
+    public NotificationMessage(String message) {
+        super(ServerMessageType.NOTIFICATION);
+        this.message = message;
     }
 
-    public ServerMessage(ServerMessageType type) {
-        this.serverMessageType = type;
-    }
-
-    public ServerMessageType getServerMessageType() {
-        return this.serverMessageType;
+    public String getMessage() {
+        return this.message;
     }
 
     @Override
@@ -33,7 +28,7 @@ public class ServerMessage {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ServerMessage that)) {
+        if (!(o instanceof NotificationMessage that)) {
             return false;
         }
         return getServerMessageType() == that.getServerMessageType();
@@ -46,6 +41,6 @@ public class ServerMessage {
 
     @Override
     public String toString() {
-        return new Gson().toJson(this, ServerMessage.class);
+        return new Gson().toJson(this, NotificationMessage.class);
     }
 }

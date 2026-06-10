@@ -1,6 +1,5 @@
 package websocket.messages;
 
-import chess.ChessGame;
 import com.google.gson.Gson;
 
 import java.util.Objects;
@@ -11,21 +10,16 @@ import java.util.Objects;
  * Note: You can add to this class, but you should not alter the existing
  * methods.
  */
-public class ServerMessage {
-    ServerMessageType serverMessageType;
+public class ErrorMessage extends ServerMessage {
+    String errorMessage;
 
-    public enum ServerMessageType {
-        LOAD_GAME,
-        ERROR,
-        NOTIFICATION
+    public ErrorMessage(String message) {
+        super(ServerMessageType.ERROR);
+        this.errorMessage = message;
     }
 
-    public ServerMessage(ServerMessageType type) {
-        this.serverMessageType = type;
-    }
-
-    public ServerMessageType getServerMessageType() {
-        return this.serverMessageType;
+    public String getMessage() {
+        return this.errorMessage;
     }
 
     @Override
@@ -33,7 +27,7 @@ public class ServerMessage {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ServerMessage that)) {
+        if (!(o instanceof ErrorMessage that)) {
             return false;
         }
         return getServerMessageType() == that.getServerMessageType();
@@ -46,6 +40,6 @@ public class ServerMessage {
 
     @Override
     public String toString() {
-        return new Gson().toJson(this, ServerMessage.class);
+        return new Gson().toJson(this, ErrorMessage.class);
     }
 }
