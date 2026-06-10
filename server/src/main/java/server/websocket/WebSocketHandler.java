@@ -65,20 +65,27 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     private void connect(String authToken, int gameID, Session session) throws IOException, DataAccessException {
 //        System.out.println("we are adding a session");
+        String broadcastMessage;
         String message;
         AuthData auth = authDAO.getAuth(authToken);
         GameData game = gameDAO.getGame(gameID);
         if (Objects.equals(game.whiteUsername(), auth.username())) {
-            message = String.format("%s joined as the white player", auth.username());
+            broadcastMessage = String.format("%s joined as the white player", auth.username());
+            message = "You joined as the white player";
         } else if (Objects.equals(game.blackUsername(), auth.username())) {
-            message = String.format("%s joined as the black player", auth.username());
+            broadcastMessage = String.format("%s joined as the black player", auth.username());
+            message = "You joined as the black player";
         }  else {
-            message = String.format("%s began observing the game", auth.username());
+            broadcastMessage = String.format("%s began observing the game", auth.username());
+            message = "You joined as an observer";
         }
         connections.add(session, gameID);
-        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, broadcastMessage, null);
 //        System.out.println("we are broadcasting the message from leave function of WebSocketHandler!");
         connections.broadcast(session, gameID, notification);
+
+        notification = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message, game.game());
+        connections.broadcastBack(session, notification);
     }
 
     private void makeMove(String authToken, int gameID, ChessMove req, Session session) throws IOException, DataAccessException, InvalidMoveException {
@@ -87,7 +94,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             String message = "Oops you aren't authorized to do that! Try logging in again!";
 //            var notification = new ServerMessage(ServerMessage.ServerMessageType.ERROR, message);
 //            connections.broadcast(session, gameID, notification);
-            connections.broadcastBack(session, new ServerMessage(ServerMessage.ServerMessageType.ERROR, message));
+            connections.broadcastBack(session, new ServerMessage(ServerMessage.ServerMessageType.ERROR, message, null));
             return;
         }
         GameData gameData = gameDAO.getGame(gameID);
@@ -116,29 +123,33 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         String pieceType = piece.getPieceType().toString();
         pieceType = pieceType.substring(0,1).toUpperCase() + pieceType.substring(1).toLowerCase();
         if (game.isInCheckmate(teamColor)) {
-            String message = String.format("Checkmate! %s moved %s from %c%d to %c%d and has won the game!",
-                    auth.username(),
+            String message = String.format("moved %s from %c%d to %c%d and has won the game!",
                     pieceType,
                     (char) req.getStartPosition().getColumn() + 'a' - 1,
                     req.getStartPosition().getRow(),
                     (char)req.getEndPosition().getColumn() + 'a' - 1,
                     req.getEndPosition().getRow()
             );
-            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message));
+            String broadcastMessage = String.format("Checkmate! %s %s", auth.username(), message);
+            message = String.format("Checkmate! %s %s", "You", message);
+            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, broadcastMessage, game));
+            connections.broadcastBack(session, new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message, game));
             return;
         } else if (game.isInStalemate(teamColor)) {
-            String message = String.format("Drats its a stalemate! %s moved %s from %c%d to %c%d",
-                    auth.username(),
+            String message = String.format("moved %s from %c%d to %c%d",
                     pieceType,
                     (char) req.getStartPosition().getColumn() + 'a' - 1,
                     req.getStartPosition().getRow(),
                     (char)req.getEndPosition().getColumn() + 'a' - 1,
                     req.getEndPosition().getRow()
             );
-            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message));
+            String broadcastMessage = String.format("Drats its a stalemate! %s %s", auth.username(), message);
+            message = String.format("Drats its a stalemate! %s %s", "You", message);
+            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, broadcastMessage, game));
+            connections.broadcastBack(session, new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message, game));
             return;
         } else if (game.isInCheck(teamColor)) {
-            String message = String.format("Check! %s moved %s from %c%d to %c%d",
+            String broadcastMessage = String.format("Check! %s moved %s from %c%d to %c%d",
                     auth.username(),
                     pieceType,
                     (char) req.getStartPosition().getColumn() + 'a' - 1,
@@ -147,9 +158,25 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                     req.getEndPosition().getRow()
 
             );
+            String enemyColor;
+            if (teamColor == ChessGame.TeamColor.BLACK) {
+                enemyColor = "white";
+            } else {
+                enemyColor = "black";
+            }
+            String message = String.format("You moved %s from %c%d to %c%d and put %s in check!",
+                    pieceType,
+                    (char) req.getStartPosition().getColumn() + 'a' - 1,
+                    req.getStartPosition().getRow(),
+                    (char)req.getEndPosition().getColumn() + 'a' - 1,
+                    req.getEndPosition().getRow(),
+                    enemyColor
+            );
+            connections.broadcast(session, gameID, new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, broadcastMessage, game));
+            connections.broadcastBack(session, new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message, game));
             return;
         }
-        var message = String.format("%s moved %s from %c%d to %c%d",
+        String broadcastMessage = String.format("%s moved %s from %c%d to %c%d",
                 auth.username(),
                 pieceType,
                 (char) req.getStartPosition().getColumn() + 'a' - 1,
@@ -157,8 +184,17 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 (char)req.getEndPosition().getColumn() + 'a' - 1,
                 req.getEndPosition().getRow()
         );
-        var notification = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message);
+        String message = String.format("You moved %s from %c%d to %c%d",
+                pieceType,
+                (char) req.getStartPosition().getColumn() + 'a' - 1,
+                req.getStartPosition().getRow(),
+                (char)req.getEndPosition().getColumn() + 'a' - 1,
+                req.getEndPosition().getRow()
+        );
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, broadcastMessage, game);
         connections.broadcast(session, gameID, notification);
+        notification = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message, game);
+        connections.broadcastBack(session, notification);
     }
 
     private void leave(String authToken, int gameID, /*String username, boolean isPlaying, String playerColor,*/ Session session) throws IOException, DataAccessException {
@@ -177,7 +213,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         }  else {
             message = String.format("The observer %s left the game", auth.username());
         }
-        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
 //        System.out.println("we are broadcasting the message from leave function of WebSocketHandler!");
         connections.broadcast(session, gameID, notification);
         connections.remove(session);

@@ -39,7 +39,6 @@ public class GameClient implements ServerMessageHandler {
     public void run() throws ResponseException {
 //        System.out.println("we in GameClient!");
         ws.connectToGame(authToken, gameID);
-        printBoard();
         Scanner scanner = new Scanner(System.in);
         String result = "";
         while (!result.equals("quit")) {
@@ -63,7 +62,7 @@ public class GameClient implements ServerMessageHandler {
         if (message.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
             System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
         } else if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
-            printBoard();
+            printBoard(message.getGame());
             System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
         } else {
             System.out.println(SET_TEXT_COLOR_RED + message.getMessage());
@@ -81,7 +80,7 @@ public class GameClient implements ServerMessageHandler {
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             if (isPlaying) {
                 return switch (cmd) {
-                    case "show", "s" -> printBoard();
+                    case "show", "s" -> printBoard(getGameData().game());
                     case "move", "m" -> makeMove(params);
                     case "highlight", "t" -> highlightMoves(params);
                     case "leave", "l" -> leaveGame();
@@ -91,7 +90,7 @@ public class GameClient implements ServerMessageHandler {
                 };
             } else {
                 return switch (cmd) {
-                    case "show", "s" -> printBoard();
+                    case "show", "s" -> printBoard(getGameData().game());
                     case "leave", "l" -> leaveGame();
                     case "help", "h" -> observerHelp();
                     default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
@@ -160,18 +159,18 @@ public class GameClient implements ServerMessageHandler {
         }
     }
 
-    public String printBoard() throws ResponseException {
+    public String printBoard(ChessGame game) throws ResponseException {
 //        System.out.println("we about to print the board in GameClient!");
         if (!this.isPlaying || Objects.equals(this.playerColor, "WHITE")) {
-            return printWhiteBoard();
+            return printWhiteBoard(game);
         } else {
-            return printBlackBoard();
+            return printBlackBoard(game);
         }
     }
 
-    public String printWhiteBoard() throws ResponseException {
+    public String printWhiteBoard(ChessGame game) throws ResponseException {
 //        System.out.println("printing the white board!");
-        ChessGame game = getGameData().game();
+//        ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
             board = game.getBoard();
@@ -187,9 +186,9 @@ public class GameClient implements ServerMessageHandler {
         return "";
     }
 
-    public String printBlackBoard() throws ResponseException {
+    public String printBlackBoard(ChessGame game) throws ResponseException {
 //        System.out.println("printing the black board!");
-        ChessGame game = getGameData().game();
+//        ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
             board = game.getBoard();
