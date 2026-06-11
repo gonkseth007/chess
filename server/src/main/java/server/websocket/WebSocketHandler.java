@@ -1,6 +1,5 @@
 package server.websocket;
 
-//import exception.ResponseException;
 import chess.*;
 import com.google.gson.Gson;
 import dataaccess.*;
@@ -13,6 +12,7 @@ import io.javalin.websocket.WsMessageHandler;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
+import org.jetbrains.annotations.NotNull;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
@@ -20,18 +20,15 @@ import websocket.messages.NotificationMessage;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Scanner;
 
 public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
     private final ConnectionManager connections = new ConnectionManager();
     private final AuthDataAccess authDAO;
-    private final UserDataAccess userDAO;
     private final GameDataAccess gameDAO;
 
-    public WebSocketHandler(AuthDataAccess authDAO, UserDataAccess userDAO, GameDataAccess gameDAO) {
+    public WebSocketHandler(AuthDataAccess authDAO, GameDataAccess gameDAO) {
         this.authDAO = authDAO;
-        this.userDAO = userDAO;
         this.gameDAO = gameDAO;
     }
 
@@ -53,12 +50,12 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             }
         }
         catch (IOException | DataAccessException | InvalidMoveException ex) {
-            ex.printStackTrace();
+            throw new RuntimeException();
         }
     }
 
     @Override
-    public void handleClose(WsCloseContext ctx) {
+    public void handleClose(@NotNull WsCloseContext ctx) {
         System.out.println("Websocket closed");
     }
 
@@ -90,7 +87,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             if (auth == null || gameData == null) {
                 return;
             }
-            ChessGame.TeamColor teamColor = null;
+            ChessGame.TeamColor teamColor;
             if (Objects.equals(gameData.whiteUsername(), auth.username())) {
                 teamColor = ChessGame.TeamColor.BLACK;
             } else if (Objects.equals(gameData.blackUsername(), auth.username())) {
@@ -111,14 +108,13 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 String message = "Error: Oops! You can't move your opponent's piece!";
                 connections.broadcastBack(session, new ErrorMessage(message));
                 return;
+            } else if ((teamColor == ChessGame.TeamColor.WHITE && piece.getPieceType() == ChessPiece.PieceType.PAWN && req.getEndPosition().getRow() == 1) ||
+                    (teamColor == ChessGame.TeamColor.BLACK && piece.getPieceType() == ChessPiece.PieceType.PAWN && req.getEndPosition().getRow() == 8)) {
+                String message = "Oops! Since that pawn is being moved to the end of the board, you must enter in the piece you want to promote it to (e.g. \"move e7 e8 QUEEN\")!";
+                connections.broadcastBack(session, new ErrorMessage(message));
+                return;
             }
-            ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, req.getEndPosition().getRow());
-            game.makeMove(new ChessMove(
-                    req.getStartPosition(),
-                    req.getEndPosition(),
-                    promotionPiece
-            ));
-
+            game.makeMove(req);
             String pieceType = piece.getPieceType().toString();
             pieceType = pieceType.substring(0, 1).toUpperCase() + pieceType.substring(1).toLowerCase();
             String broadcastMessage = String.format("%s moved %s from %c%d to %c%d",
@@ -129,16 +125,16 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                     (char) req.getEndPosition().getColumn() + 'a' - 1,
                     req.getEndPosition().getRow()
             );
-
             var gameMessage = new LoadGameMessage(game);
             connections.broadcast(session, gameID, gameMessage);
             var notification = new NotificationMessage(broadcastMessage);
             connections.broadcast(session, gameID, notification);
             gameMessage = new LoadGameMessage(game);
             connections.broadcastBack(session, gameMessage);
+            String enemyUsername = getEnemyUsername(gameData, auth.username());
             if (game.isInCheckmate(teamColor)) {
-                String checkmateBroadcastMessage = String.format("Checkmate! %s has won the game!", auth.username());
-                String message = "Checkmate! You have won the game!";
+                String checkmateBroadcastMessage = String.format("%s was put into checkmate! %s has won the game!", enemyUsername, auth.username());
+                String message = String.format("%s was put into checkmate! You won the game!", enemyUsername);
                 connections.broadcast(session, gameID, new NotificationMessage(checkmateBroadcastMessage));
                 connections.broadcastBack(session, new NotificationMessage(message));
                 game.endGame();
@@ -148,7 +144,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 connections.broadcastBack(session, new NotificationMessage(message));
                 game.endGame();
             } else if (game.isInCheck(teamColor)) {
-                String message = "Check!";
+                String message = String.format("%s was put into check!", enemyUsername);
                 connections.broadcast(session, gameID, new NotificationMessage(message));
                 connections.broadcastBack(session, new NotificationMessage(message));
             }
@@ -250,26 +246,11 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         return auth;
     }
 
-    private ChessPiece.PieceType getPromotionPiece(ChessPiece piece, int endY) {
-        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE && endY == 8) {
-                Scanner scanner = new Scanner(System.in);
-                String promotionPiece = "";
-//                while (!promotionPiece.equals("QUEEN") && !promotionPiece.equals("ROOK") && !promotionPiece.equals("KNIGHT") && !promotionPiece.equals("BISHOP")) {
-////                    System.out.println(SET_TEXT_COLOR_GREEN + pawnPromotionPrompt());
-//                    promotionPiece = scanner.nextLine().toUpperCase();
-//                }
-//                return ChessPiece.PieceType.valueOf(promotionPiece);
-            } else if (piece.getTeamColor() == ChessGame.TeamColor.BLACK && endY == 1) {
-                Scanner scanner = new Scanner(System.in);
-//                String promotionPiece = "";
-//                while (!promotionPiece.equals("QUEEN") && !promotionPiece.equals("ROOK") && !promotionPiece.equals("KNIGHT") && !promotionPiece.equals("BISHOP")) {
-////                    System.out.println(SET_TEXT_COLOR_GREEN + pawnPromotionPrompt());
-//                    promotionPiece = scanner.nextLine().toUpperCase();
-//                }
-//                return ChessPiece.PieceType.valueOf(promotionPiece);
-            }
+    private String getEnemyUsername(GameData game, String username) {
+        if (Objects.equals(game.whiteUsername(), username)) {
+            return game.blackUsername();
+        } else {
+            return game.whiteUsername();
         }
-        return null;
     }
 }

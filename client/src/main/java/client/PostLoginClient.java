@@ -10,16 +10,14 @@ public class PostLoginClient {
     private final ServerFacade server;
     private final String serverURL;
     private final String authToken;
-    private final String username;
     private final HashMap<Integer, GameData> gameDataHashMap = new HashMap<>();
     private Boolean joinedGame = false;
     private final ArrayList<String> gameInfo = new ArrayList<>();
 
-    public PostLoginClient(String serverURL, String authToken, String username) {
+    public PostLoginClient(String serverURL, String authToken) {
         server = new ServerFacade(serverURL);
         this.serverURL = serverURL;
         this.authToken = authToken;
-        this.username = username;
     }
 
     private void printPrompt() {
@@ -38,10 +36,11 @@ public class PostLoginClient {
 
             try {
                 result = eval(line);
+                System.out.print(SET_TEXT_COLOR_BLUE);
                 if (Objects.equals(result, "logout")) {
-                    System.out.println(SET_TEXT_COLOR_BLUE + "You have successfully logged out!");
+                    System.out.println("You have successfully logged out!");
                 } else {
-                    System.out.println(SET_TEXT_COLOR_BLUE + result);
+                    System.out.println(result);
                 }
                 if (joinedGame) {
                     new GameClient(serverURL, authToken, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
@@ -62,7 +61,7 @@ public class PostLoginClient {
                 server.createGame(new CreateGameRequest(params[0], authToken));
             } catch (BadRequestException ex) {
                 System.out.print(SET_TEXT_COLOR_RED);
-                return "Sorry that input was invalid. " +
+                return SET_TEXT_COLOR_RED + "Sorry that input was invalid. " +
                         "To create a game: type \"c\", \"create\" <DESIRED GAME NAME>";
             } catch (AuthorizationException ex) {
                 throw new AuthorizationException();
@@ -71,7 +70,7 @@ public class PostLoginClient {
             }
             return "You have successfully created the game!";
         }
-        return "Oops, you didn't input a name for your game! " +
+        return SET_TEXT_COLOR_RED + "Oops, you didn't input a name for your game! " +
                 "To create a game: type \"c\", \"create\" <DESIRED GAME NAME>";
     }
 
@@ -81,7 +80,7 @@ public class PostLoginClient {
             try {
                 GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
                 if (game == null) {
-                    return "Sorry there is no game correlating to that given number! " +
+                    return SET_TEXT_COLOR_RED + "Sorry there is no game correlating to that given number! " +
                             "List out the games and use the number in front of the game name to join!";
                 }
                 gameName = game.gameName();
@@ -92,23 +91,22 @@ public class PostLoginClient {
                 joinedGame = true;
             } catch (BadRequestException ex) {
                 System.out.print(SET_TEXT_COLOR_RED);
-                return "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! " +
+                return SET_TEXT_COLOR_RED + "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! " +
                         "You must specify either WHITE or BLACK as your player color and what game number you want to join!";
             } catch (AuthorizationException ex) {
                 throw new AuthorizationException();
             } catch (AlreadyTakenException ex) {
-                System.out.print(SET_TEXT_COLOR_RED);
-                return String.format("Aw shucks! Someone is already playing as the %s player!",
+                return String.format(SET_TEXT_COLOR_RED + "Aw shucks! Someone is already playing as the %s player!",
                         (params[1].substring(0, 1).toUpperCase() + params[1].substring(1).toLowerCase()));
             } catch (ResponseException ex) {
                 throw new ResponseException();
             } catch (NumberFormatException ex) {
-                return "Sorry, you typed in a word instead of a number! " +
+                return SET_TEXT_COLOR_RED + "Sorry, you typed in a word instead of a number! " +
                         "In order to join a game you need to type in its given number shown when you list the games!";
             }
             return String.format("You have successfully joined game #%s - %s!", params[0], gameName);
         }
-        return "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! " +
+        return SET_TEXT_COLOR_RED + "Sorry that input was invalid. To join a game: type \"j\", \"join\" <ID> [WHITE|BLACK]! " +
                 "You must specify either WHITE or BLACK as your player color and what game number you want to join!";
     }
 
@@ -117,7 +115,7 @@ public class PostLoginClient {
             try {
                 GameData game = gameDataHashMap.get(Integer.parseInt(params[0]));
                 if (game == null) {
-                    return "Sorry there is no game correlating to that given number! " +
+                    return SET_TEXT_COLOR_RED + "Sorry there is no game correlating to that given number! " +
                             "List out the games and use the number in front of the game name to join!";
                 }
                 gameInfo.addFirst(String.valueOf(game.gameID()));
@@ -125,12 +123,12 @@ public class PostLoginClient {
                 gameInfo.add(2, null);
                 joinedGame = true;
             } catch (NumberFormatException ex) {
-                return "Sorry, you typed in a word instead of a number! " +
+                return SET_TEXT_COLOR_RED + "Sorry, you typed in a word instead of a number! " +
                         "In order to observe a game you need to type in its given number shown when you list the games!";
             }
             return String.format("You are successfully observing game #%s!", params[0]);
         }
-        return "Sorry, to observe a game you must specify which game number you want to observe " +
+        return SET_TEXT_COLOR_RED + "Sorry, to observe a game you must specify which game number you want to observe " +
                 "- list the games again if you don't know the number!";
     }
 
@@ -140,18 +138,22 @@ public class PostLoginClient {
             ListGamesResult result = server.listGames(authToken);
             Collection<GameData> games = result.games();
             int i = 1;
-            for (GameData game : games) {
-                String whitePlayer = game.whiteUsername();
-                if (whitePlayer == null) {
-                    whitePlayer = "no one";
+            if (!games.isEmpty()) {
+                for (GameData game : games) {
+                    String whitePlayer = game.whiteUsername();
+                    if (whitePlayer == null) {
+                        whitePlayer = "no one";
+                    }
+                    String blackPlayer = game.blackUsername();
+                    if (blackPlayer == null) {
+                        blackPlayer = "no one";
+                    }
+                    listedGamesDisplay.append(String.format("%d. %s - White Player: %s, Black Player: %s \n", i, game.gameName(), whitePlayer, blackPlayer));
+                    gameDataHashMap.put(i, game);
+                    i++;
                 }
-                String blackPlayer = game.blackUsername();
-                if (blackPlayer == null) {
-                    blackPlayer = "no one";
-                }
-                listedGamesDisplay.append(String.format("%d. %s - White Player: %s, Black Player: %s \n", i, game.gameName(), whitePlayer, blackPlayer));
-                gameDataHashMap.put(i, game);
-                i++;
+            } else {
+                return "There are no games created yet!";
             }
         } catch (AuthorizationException ex) {
             throw new AuthorizationException();

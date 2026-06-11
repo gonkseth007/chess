@@ -28,7 +28,7 @@ public class Server {
         UserDataAccess userDAO = new MySqlUserDataAccess();
         AuthDataAccess authDAO = new MySqlAuthDataAccess();
         GameDataAccess gameDAO = new MySqlGameDataAccess();
-        webSocketHandler = new WebSocketHandler(authDAO, userDAO, gameDAO);
+        webSocketHandler = new WebSocketHandler(authDAO, gameDAO);
         uService = new UserService(userDAO, authDAO);
         cService = new ClearService(authDAO, userDAO, gameDAO);
         gService = new GameService(authDAO, gameDAO);

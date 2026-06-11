@@ -39,8 +39,9 @@ public class GameClient implements ServerMessageHandler {
             String line = scanner.nextLine();
 
             try {
+                System.out.print(SET_TEXT_COLOR_BLUE);
                 result = eval(line);
-                System.out.println(SET_TEXT_COLOR_BLUE + result);
+                System.out.println(result);
 
             } catch (Throwable e) {
                 System.out.print(SET_TEXT_COLOR_RED);
@@ -49,12 +50,12 @@ public class GameClient implements ServerMessageHandler {
         }
     }
 
-    public void notify(ServerMessage message) throws ResponseException {
-        System.out.println();
+    public void notify(ServerMessage message) {
         if (message.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
             NotificationMessage notification = (NotificationMessage) message;
             System.out.println(SET_TEXT_COLOR_MAGENTA + notification.getMessage());
         } else if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+            System.out.println();
             LoadGameMessage loadedGame = (LoadGameMessage) message;
             printBoard(loadedGame.getGame(), null, null);
         } else {
@@ -68,11 +69,20 @@ public class GameClient implements ServerMessageHandler {
         System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
     }
 
+    public boolean confirmResign() {
+        String confirmedResign = null;
+        while (!Objects.equals(confirmedResign, "YES") && !Objects.equals(confirmedResign, "NO")) {
+            System.out.println("Are you sure you want to resign? (type in \"yes\" or \"no\"");
+            Scanner scanner = new Scanner(System.in);
+            confirmedResign = scanner.nextLine().toUpperCase();
+        }
+        return Objects.equals(confirmedResign, "YES");
+    }
+
     public String eval(String input) throws ResponseException {
             String[] tokens = input.toLowerCase().split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-//            if (isPlaying) {
                 return switch (cmd) {
                     case "show", "s" -> printBoard(getGameData().game(), null, null);
                     case "move", "m" -> makeMove(params);
@@ -82,14 +92,6 @@ public class GameClient implements ServerMessageHandler {
                     case "help", "h" -> help();
                     default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
                 };
-//            } else {
-//                return switch (cmd) {
-//                    case "show", "s" -> printBoard(getGameData().game());
-//                    case "leave", "l" -> leaveGame();
-//                    case "help", "h" -> observerHelp();
-//                    default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
-//                };
-//            }
     }
 
     public String highlightMoves(String... params) throws ResponseException {
@@ -117,17 +119,17 @@ public class GameClient implements ServerMessageHandler {
         if (params.length > 1) {
             try {
                 ws.makeMove(authToken, gameID, params);
-                return "move made!";
+                return "";
             } catch (InvalidMovePositionsException ex) {
-                return "Error: One or both those positions aren't valid. Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
+                return SET_TEXT_COLOR_RED + "Error: One or both those positions aren't valid. Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
             } catch (InvalidMoveException e) {
-                return "Error: That move wasn't valid!";
+                return SET_TEXT_COLOR_RED + "Error: That move wasn't valid!";
             } catch (AuthorizationException e) {
-                return "Error: You aren't authorized to do that... try logging in again?";
+                return SET_TEXT_COLOR_RED + "Error: You aren't authorized to do that... try logging in again?";
             }
 
         }
-        return "Oops, you forgot something! You must enter in a valid start position and end position (e.g. \"move A2 A3\")";
+        return SET_TEXT_COLOR_RED + "Oops, you forgot something! You must enter in a valid start position and end position (e.g. \"move A2 A3\")";
     }
 
     public String leaveGame() {
@@ -136,15 +138,17 @@ public class GameClient implements ServerMessageHandler {
     }
 
     public String resignFromGame() {
-        ws.resignFromGame(authToken, gameID);
-        if (Objects.equals(this.playerColor, "WHITE")) {
-            return "You have resigned from the game and black wins!";
+        boolean resigned = ws.resignFromGame(authToken, gameID);
+        if (resigned) {
+            return "";
+//        } else if (resigned) {
+//            return "";
         } else {
-            return "You have resigned from the game and white wins!";
+            return "You chose not to resign so the game continues!";
         }
     }
 
-    public String printBoard(ChessGame game, ChessPiece piece, ChessPosition pos) throws ResponseException {
+    public String printBoard(ChessGame game, ChessPiece piece, ChessPosition pos) {
         if (!this.isPlaying || Objects.equals(this.playerColor, "WHITE")) {
             return printWhiteBoard(game, piece, pos);
         } else {
@@ -251,6 +255,7 @@ public class GameClient implements ServerMessageHandler {
             for (ChessMove move: moves) {
                 if (move.getStartPosition().getRow() == i && move.getStartPosition().getColumn() == j) {
                     isStartPos = true;
+                    break;
                 }
                 break;
             }
@@ -306,30 +311,11 @@ public class GameClient implements ServerMessageHandler {
         return """
                 Options:
                 - Display the board again: "s", "show"
-                - Make a move: "m", "move" <START POSITION> <END POSITION>
+                - Make a move: "m", "move" <START POSITION> <END POSITION> [QUEEN|ROOK|KNIGHT|BISHOP] (you only need to enter the piece for pawn promotion)
                 - Highlight legal moves: "t", "highlight" <PIECE POSITION>
                 - Resign from the game: "r", "resign"
                 - Leave the game: "l", "leave"
                 - Get help (this message): "h", "help"
-                """;
-    }
-
-    public String observerHelp() {
-        return """
-                Options:
-                - Display the board again: "s", "show"
-                - Leave the game: "l", "leave"
-                - Get help (this message): "h", "help"
-                """;
-    }
-
-    public String pawnPromotionPrompt() {
-        return """
-                Please enter in the piece you'd like to promote your pawn to!
-                - Queen
-                - Rook
-                - Knight
-                - Bishop
                 """;
     }
 }

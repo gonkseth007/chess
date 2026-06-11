@@ -48,13 +48,8 @@ public class WebSocketFacade extends Endpoint {
                 }
             });
         } catch (DeploymentException ex) {
-            ex.printStackTrace();
             throw new ResponseException();
-        } catch (URISyntaxException ex) {
-            ex.printStackTrace();
-            throw new RuntimeException(ex);
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (URISyntaxException | IOException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -80,11 +75,18 @@ public class WebSocketFacade extends Endpoint {
             if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
                 throw new InvalidMovePositionsException();
             }
+            ChessPiece.PieceType promotionPiece = null;
+            if (params.length >= 3) {
+                params[2] = params[2].toUpperCase();
+                if (params[2].equals("QUEEN") || params[2].equals("BISHOP") || params[2].equals("ROOK") || params[2].equals("KNIGHT")) {
+                    promotionPiece = ChessPiece.PieceType.valueOf(params[2]);
+                }
+            }
             var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID,
                     new ChessMove(
                             new ChessPosition(startY, startX),
                             new ChessPosition(endY, endX),
-                            null));
+                            promotionPiece));
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (InvalidMovePositionsException ex) {
             throw new InvalidMovePositionsException();
@@ -102,17 +104,18 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    public void resignFromGame(String authToken, int gameID) {
+    public boolean resignFromGame(String authToken, int gameID) {
         try {
+            boolean resigned = serverMessageHandler.confirmResign();
+            if (!resigned) {
+                return false;
+            }
             var command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameID, null);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
+            return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void send(String message) throws IOException {
-        session.getBasicRemote().sendText(message);
     }
 
     // This method must be overridden, but we don't have to do anything with it

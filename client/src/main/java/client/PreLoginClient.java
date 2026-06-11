@@ -8,11 +8,9 @@ import model.*;
 import static ui.EscapeSequences.*;
 
 public class PreLoginClient {
-//    private String visitorName = null;
     private final ServerFacade server;
     private final String serverURL;
     private String authToken = null;
-    private String username = null;
 
     public PreLoginClient(String serverURL) {
         server = new ServerFacade(serverURL);
@@ -24,7 +22,7 @@ public class PreLoginClient {
     }
 
     public void run() {
-        System.out.println(WHITE_KING + " Welcome to CHESS! Login or Register to start! (or type \"help\" to get some help)");
+        System.out.println(WHITE_QUEEN + " Welcome to CHESS! Login or Register to start! (or type \"help\" to get some help)");
 
         Scanner scanner = new Scanner(System.in);
         String result = "";
@@ -36,9 +34,8 @@ public class PreLoginClient {
                 result = eval(line);
                 System.out.println(result);
                 if (authToken != null) {
-                    new PostLoginClient(serverURL, authToken, username).run();
+                    new PostLoginClient(serverURL, authToken).run();
                     authToken = null;
-                    username = null;
                 }
             } catch (Throwable e) {
                 System.out.print(SET_TEXT_COLOR_RED);
@@ -52,7 +49,6 @@ public class PreLoginClient {
             try {
                 RegisterLoginResult result = server.register(new RegisterRequest(params[0], params[1], params[2]));
                 authToken = result.authToken();
-                username = result.username();
             } catch (BadRequestException ex) {
                 System.out.print(SET_TEXT_COLOR_RED);
                 return "Oops, you forgot something in the register process! " +
@@ -79,7 +75,6 @@ public class PreLoginClient {
             try {
                 RegisterLoginResult result = server.login(new LoginRequest(params[0], params[1]));
                 authToken = result.authToken();
-                username = result.username();
             } catch (BadRequestException ex) {
                 System.out.print(SET_TEXT_COLOR_RED);
                 return "Oops, your input wasn't right! In order to login, " +
