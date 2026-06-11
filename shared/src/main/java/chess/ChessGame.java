@@ -15,6 +15,7 @@ public class ChessGame {
 
     private TeamColor teamTurn = TeamColor.WHITE;
     private ChessBoard board = new ChessBoard();
+    private boolean gameEnded = false;
     public ChessGame() {
         board.resetBoard();
     }
@@ -33,6 +34,20 @@ public class ChessGame {
      */
     public void setTeamTurn(TeamColor team) {
         teamTurn = team;
+    }
+
+    /**
+     * @return If game has ended
+     */
+    public boolean getGameEnded() {
+        return gameEnded;
+    }
+
+    /**
+     * Ends the game
+     */
+    public void endGame() {
+        gameEnded = true;
     }
 
     /**

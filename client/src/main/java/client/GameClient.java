@@ -3,10 +3,10 @@ package client;
 import chess.*;
 import client.websocket.ServerMessageHandler;
 import client.websocket.WebSocketFacade;
-import com.google.gson.Gson;
-import model.ChessMoveRequest;
 import model.GameData;
-import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
 import java.util.*;
@@ -14,30 +14,26 @@ import java.util.*;
 import static ui.EscapeSequences.*;
 
 public class GameClient implements ServerMessageHandler {
-//    private String visitorName = null;
     private final ServerFacade server;
     private final WebSocketFacade ws;
     private final String authToken;
-    private final String username;
     private final Integer gameID;
     private final boolean isPlaying;
     private final String playerColor;
 
-    public GameClient(String serverURL, String authToken, String username, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
+    public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
 //        System.out.println("so we in class declaration of GameClient");
         server = new ServerFacade(serverURL);
 //        System.out.println("got the server");
         ws = new WebSocketFacade(serverURL, this);
 //        System.out.println("got the web socket facade!");
         this.authToken = authToken;
-        this.username = username;
         this.gameID = gameID;
         this.isPlaying = isPlaying;
         this.playerColor = playerColor;
     }
 
     public void run() throws ResponseException {
-//        System.out.println("we in GameClient!");
         ws.connectToGame(authToken, gameID);
         Scanner scanner = new Scanner(System.in);
         String result = "";
@@ -57,15 +53,16 @@ public class GameClient implements ServerMessageHandler {
     }
 
     public void notify(ServerMessage message) throws ResponseException {
-//        System.out.println("we in notify function of GameClient!");
         System.out.println();
         if (message.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
-            System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
+            NotificationMessage notification = (NotificationMessage) message;
+            System.out.println(SET_TEXT_COLOR_MAGENTA + notification.getMessage());
         } else if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
-            printBoard(message.getGame());
-            System.out.println(SET_TEXT_COLOR_MAGENTA + message.getMessage());
+            LoadGameMessage loadedGame = (LoadGameMessage) message;
+            printBoard(loadedGame.getGame());
         } else {
-            System.out.println(SET_TEXT_COLOR_RED + message.getMessage());
+            ErrorMessage error = (ErrorMessage) message;
+            System.out.println(SET_TEXT_COLOR_RED + error.getMessage());
         }
         printPrompt();
     }
@@ -78,7 +75,7 @@ public class GameClient implements ServerMessageHandler {
             String[] tokens = input.toLowerCase().split(" ");
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            if (isPlaying) {
+//            if (isPlaying) {
                 return switch (cmd) {
                     case "show", "s" -> printBoard(getGameData().game());
                     case "move", "m" -> makeMove(params);
@@ -88,15 +85,14 @@ public class GameClient implements ServerMessageHandler {
                     case "help", "h" -> help();
                     default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
                 };
-            } else {
-                return switch (cmd) {
-                    case "show", "s" -> printBoard(getGameData().game());
-                    case "leave", "l" -> leaveGame();
-                    case "help", "h" -> observerHelp();
-                    default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
-                };
-            }
-
+//            } else {
+//                return switch (cmd) {
+//                    case "show", "s" -> printBoard(getGameData().game());
+//                    case "leave", "l" -> leaveGame();
+//                    case "help", "h" -> observerHelp();
+//                    default -> "Sorry, that command isn't a real command! If you need help, type in \"help\" or \"h\"";
+//                };
+//            }
     }
 
     public String highlightMoves(String... params) {
@@ -109,41 +105,15 @@ public class GameClient implements ServerMessageHandler {
                 ws.makeMove(authToken, gameID, params);
                 return "move made!";
             } catch (InvalidMovePositionsException ex) {
-                return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+                return "Error: One or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
             } catch (InvalidMoveException e) {
-                return "Sorry that move wasn't valid!";
+                return "Error: That move wasn't valid!";
             } catch (AuthorizationException e) {
-                return "Sorry you aren't authorized to do that... try logging in again?";
+                return "Error: You aren't authorized to do that... try logging in again?";
             }
 
         }
         return "Oops, you forgot something! You must enter in a valid start position and end position (e.g. \"move A2 A3\")";
-//        if (startPosition.length() != 2 || endPosition.length() != 2) {
-//            return "Sorry, one or both of those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
-//        }
-//        try {
-//            int startX = startPosition.charAt(0) - 'a' + 1;
-//            int startY = Character.getNumericValue(startPosition.charAt(1));
-//            int endX = endPosition.charAt(0) - 'a' + 1;
-//            int endY = Character.getNumericValue(endPosition.charAt(1));
-//            if (startY < 1 || startY > 8 || endY < 1 || endY > 8 || startX < 1 || startX > 8 || endX < 1 || endX > 8) {
-//                return "Sorry, one or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
-//            }
-//            GameData gameData = getGameData();
-//            ChessGame game = gameData.game();
-//            ChessPiece piece = game.getBoard().getPiece(new ChessPosition(startX, startY));
-//            ChessPiece.PieceType promotionPiece = getPromotionPiece(piece, startY);
-//            game.makeMove(new ChessMove(
-//                    new ChessPosition (startX, startY),
-//                    new ChessPosition (endX, endY),
-//                    promotionPiece
-//            ));
-//            return "You've made that move";
-//        } catch (ResponseException e) {
-//            throw new RuntimeException(e);
-//        } catch (InvalidMoveException e) {
-//            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
-//        }
     }
 
     public String leaveGame() {
@@ -160,7 +130,6 @@ public class GameClient implements ServerMessageHandler {
     }
 
     public String printBoard(ChessGame game) throws ResponseException {
-//        System.out.println("we about to print the board in GameClient!");
         if (!this.isPlaying || Objects.equals(this.playerColor, "WHITE")) {
             return printWhiteBoard(game);
         } else {
@@ -169,8 +138,6 @@ public class GameClient implements ServerMessageHandler {
     }
 
     public String printWhiteBoard(ChessGame game) throws ResponseException {
-//        System.out.println("printing the white board!");
-//        ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
             board = game.getBoard();
@@ -187,8 +154,6 @@ public class GameClient implements ServerMessageHandler {
     }
 
     public String printBlackBoard(ChessGame game) throws ResponseException {
-//        System.out.println("printing the black board!");
-//        ChessGame game = getGameData().game();
         ChessBoard board = null;
         if (game != null) {
             board = game.getBoard();

@@ -7,7 +7,6 @@ import java.util.*;
 import static ui.EscapeSequences.*;
 
 public class PostLoginClient {
-//    private String visitorName = null;
     private final ServerFacade server;
     private final String serverURL;
     private final String authToken;
@@ -45,7 +44,7 @@ public class PostLoginClient {
                     System.out.println(SET_TEXT_COLOR_BLUE + result);
                 }
                 if (joinedGame) {
-                    new GameClient(serverURL, authToken, username, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
+                    new GameClient(serverURL, authToken, Integer.parseInt(gameInfo.get(0)), Boolean.valueOf(gameInfo.get(1)), gameInfo.get(2)).run();
                     joinedGame = false;
                     gameInfo.clear();
                 }
