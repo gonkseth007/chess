@@ -22,11 +22,8 @@ public class GameClient implements ServerMessageHandler {
     private final String playerColor;
 
     public GameClient(String serverURL, String authToken, Integer gameID, Boolean isPlaying, String playerColor) throws ResponseException {
-//        System.out.println("so we in class declaration of GameClient");
         server = new ServerFacade(serverURL);
-//        System.out.println("got the server");
         ws = new WebSocketFacade(serverURL, this);
-//        System.out.println("got the web socket facade!");
         this.authToken = authToken;
         this.gameID = gameID;
         this.isPlaying = isPlaying;
@@ -37,7 +34,7 @@ public class GameClient implements ServerMessageHandler {
         ws.connectToGame(authToken, gameID);
         Scanner scanner = new Scanner(System.in);
         String result = "";
-        while (!result.equals("quit")) {
+        while (!result.equals("You have left the game!")) {
             printPrompt();
             String line = scanner.nextLine();
 
@@ -59,7 +56,7 @@ public class GameClient implements ServerMessageHandler {
             System.out.println(SET_TEXT_COLOR_MAGENTA + notification.getMessage());
         } else if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
             LoadGameMessage loadedGame = (LoadGameMessage) message;
-            printBoard(loadedGame.getGame());
+            printBoard(loadedGame.getGame(), null, null);
         } else {
             ErrorMessage error = (ErrorMessage) message;
             System.out.println(SET_TEXT_COLOR_RED + error.getMessage());
@@ -77,7 +74,7 @@ public class GameClient implements ServerMessageHandler {
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
 //            if (isPlaying) {
                 return switch (cmd) {
-                    case "show", "s" -> printBoard(getGameData().game());
+                    case "show", "s" -> printBoard(getGameData().game(), null, null);
                     case "move", "m" -> makeMove(params);
                     case "highlight", "t" -> highlightMoves(params);
                     case "leave", "l" -> leaveGame();
@@ -95,8 +92,25 @@ public class GameClient implements ServerMessageHandler {
 //            }
     }
 
-    public String highlightMoves(String... params) {
-        return "Here's the legal moves for that piece!";
+    public String highlightMoves(String... params) throws ResponseException {
+        if (params.length < 1) {
+            return "Oops, you forgot to enter in what position of the piece you want the moves to be highlighted for!";
+        }
+        if (params[0].length() != 2) {
+            return "Oops! That position isn't valid. Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
+        }
+        int x = params[0].charAt(0) - 'a' + 1;
+        int y = Character.getNumericValue(params[0].charAt(1));
+        if (y < 1 || y > 8 || x < 1 || x > 8) {
+            return "Oops! That position isn't valid. Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
+        }
+        ChessGame game = getGameData().game();
+        ChessPosition pos = new ChessPosition(y, x);
+        ChessPiece piece = game.getBoard().getPiece(pos);
+        if (piece == null) {
+            return "Oops! There is no chess piece at the entered position!";
+        }
+        return printBoard(game, piece, pos);
     }
 
     public String makeMove(String... params) {
@@ -105,7 +119,7 @@ public class GameClient implements ServerMessageHandler {
                 ws.makeMove(authToken, gameID, params);
                 return "move made!";
             } catch (InvalidMovePositionsException ex) {
-                return "Error: One or both those positions aren't valid. Valid positions must be inputted with the letter than number. (e.g. a1 or F6)";
+                return "Error: One or both those positions aren't valid. Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
             } catch (InvalidMoveException e) {
                 return "Error: That move wasn't valid!";
             } catch (AuthorizationException e) {
@@ -118,10 +132,11 @@ public class GameClient implements ServerMessageHandler {
 
     public String leaveGame() {
         ws.leaveGame(authToken, gameID);
-        return "quit";
+        return "You have left the game!";
     }
 
     public String resignFromGame() {
+        ws.resignFromGame(authToken, gameID);
         if (Objects.equals(this.playerColor, "WHITE")) {
             return "You have resigned from the game and black wins!";
         } else {
@@ -129,23 +144,27 @@ public class GameClient implements ServerMessageHandler {
         }
     }
 
-    public String printBoard(ChessGame game) throws ResponseException {
+    public String printBoard(ChessGame game, ChessPiece piece, ChessPosition pos) throws ResponseException {
         if (!this.isPlaying || Objects.equals(this.playerColor, "WHITE")) {
-            return printWhiteBoard(game);
+            return printWhiteBoard(game, piece, pos);
         } else {
-            return printBlackBoard(game);
+            return printBlackBoard(game, piece, pos);
         }
     }
 
-    public String printWhiteBoard(ChessGame game) throws ResponseException {
+    public String printWhiteBoard(ChessGame game, ChessPiece piece, ChessPosition pos) {
         ChessBoard board = null;
         if (game != null) {
             board = game.getBoard();
         }
+        Collection<ChessMove> moves = null;
+        if (piece != null) {
+            moves = piece.pieceMoves(board, pos);
+        }
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
                 for (int j = 0; j <= 9; j++) {
-                    printWhiteBlock(board, i, j);
+                    printWhiteBlock(board, i, j, moves);
                 }
                 System.out.println();
             }
@@ -153,15 +172,19 @@ public class GameClient implements ServerMessageHandler {
         return "";
     }
 
-    public String printBlackBoard(ChessGame game) throws ResponseException {
+    public String printBlackBoard(ChessGame game, ChessPiece piece, ChessPosition pos) {
         ChessBoard board = null;
         if (game != null) {
             board = game.getBoard();
         }
+        Collection<ChessMove> moves = null;
+        if (piece != null) {
+            moves = piece.pieceMoves(board, pos);
+        }
         if (board != null) {
             for (int i = 0; i <= 9; i++) {
                 for (int j = 0; j <= 9; j++) {
-                    printBlackBlock(board, i, j);
+                    printBlackBlock(board, i, j, moves);
                 }
                 System.out.println();
             }
@@ -169,7 +192,7 @@ public class GameClient implements ServerMessageHandler {
         return "";
     }
 
-    public void printWhiteBlock(ChessBoard board, int i, int j) {
+    public void printWhiteBlock(ChessBoard board, int i, int j, Collection<ChessMove> moves) {
         if (i == 0 || i == 9) {
             System.out.print(SET_BG_COLOR_LIGHT_GREY);
             System.out.print(SET_TEXT_COLOR_BLACK);
@@ -183,13 +206,13 @@ public class GameClient implements ServerMessageHandler {
             System.out.print(SET_TEXT_COLOR_BLACK);
             System.out.printf(" %d ", (9-i));
         } else {
-            printTile(board, 9-i, j);
+            printTile(board, 9-i, j, moves);
         }
         System.out.print(RESET_TEXT_COLOR);
         System.out.print(RESET_BG_COLOR);
     }
 
-    public void printBlackBlock(ChessBoard board, int i, int j) {
+    public void printBlackBlock(ChessBoard board, int i, int j, Collection<ChessMove> moves) {
         if (i == 0 || i == 9) {
             System.out.print(SET_BG_COLOR_LIGHT_GREY);
             System.out.print(SET_TEXT_COLOR_BLACK);
@@ -203,13 +226,13 @@ public class GameClient implements ServerMessageHandler {
             System.out.print(SET_TEXT_COLOR_BLACK);
             System.out.printf(" %d ", (i));
         } else {
-            printTile(board, i, 9-j);
+            printTile(board, i, 9-j, moves);
         }
         System.out.print(RESET_TEXT_COLOR);
         System.out.print(RESET_BG_COLOR);
     }
 
-    public void printTile(ChessBoard board, int i, int j) {
+    public void printTile(ChessBoard board, int i, int j, Collection<ChessMove> moves) {
         ChessPiece piece = board.getPiece(new ChessPosition(i,j));
         ChessPiece.PieceType type;
         if (piece == null) {
@@ -222,7 +245,33 @@ public class GameClient implements ServerMessageHandler {
                 System.out.print(SET_TEXT_COLOR_DARK_GREEN);
             }
         }
-        if ((i+j) % 2 != 0) {
+        boolean isStartPos = false;
+        boolean highlight = false;
+        if (moves != null) {
+            for (ChessMove move: moves) {
+                if (move.getStartPosition().getRow() == i && move.getStartPosition().getColumn() == j) {
+                    isStartPos = true;
+                }
+                break;
+            }
+            for (ChessMove move : moves) {
+                if (move.getEndPosition().getRow() == i && move.getEndPosition().getColumn() == j) {
+                    highlight = true;
+                    break;
+                }
+            }
+        }
+        if (highlight) {
+            if ((i+j) % 2 != 0) {
+                System.out.print(SET_BG_COLOR_BLUE);
+            } else {
+                System.out.print(SET_BG_COLOR_DARK_BLUE);
+            }
+            System.out.print(SET_TEXT_COLOR_WHITE);
+        } else if (isStartPos) {
+            System.out.print(SET_BG_COLOR_GREEN);
+            System.out.print(SET_TEXT_COLOR_BLACK);
+        } else if ((i+j) % 2 != 0) {
             System.out.print(SET_BG_COLOR_WHITE);
         } else {
             System.out.print(SET_BG_COLOR_BLACK);

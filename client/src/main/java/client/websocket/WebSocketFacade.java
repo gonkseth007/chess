@@ -5,9 +5,10 @@ import client.AuthorizationException;
 import client.ResponseException;
 import com.google.gson.Gson;
 import jakarta.websocket.*;
-import model.ChessMoveRequest;
-import model.GameData;
 import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -21,29 +22,24 @@ public class WebSocketFacade extends Endpoint {
 
     public WebSocketFacade(String url, ServerMessageHandler serverMessageHandler) throws ResponseException {
         try {
-//            System.out.println("we in class declaration of WebSocket Facade");
             url = url.replace("http", "ws");
-//            System.out.print("this is the new url -> ");
-//            System.out.println(url + "/ws");
             URI socketURI = new URI(url + "/ws");
-
-//            System.out.println("got the socketURI!");
 
             this.serverMessageHandler = serverMessageHandler;
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-//            System.out.println("got the web socket container!");
             this.session = container.connectToServer(this, socketURI);
-//            System.out.println("got the session!");
 
-            //set message handler
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 public void onMessage(String message) {
-//                    System.out.println("we in onMessage!");
-//                    System.out.println("\nEnter another message you want to echo:");
                     ServerMessage notification = new Gson().fromJson(message, ServerMessage.class);
-//                    System.out.println(notification.getMessage());
-//                    System.out.println("the message is above!");
+                    if (notification.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
+                        notification = new Gson().fromJson(message, NotificationMessage.class);
+                    } else if (notification.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+                        notification = new Gson().fromJson(message, LoadGameMessage.class);
+                    } else {
+                        notification = new Gson().fromJson(message, ErrorMessage.class);
+                    }
                     try {
                         serverMessageHandler.notify(notification);
                     } catch (ResponseException e) {
@@ -52,15 +48,12 @@ public class WebSocketFacade extends Endpoint {
                 }
             });
         } catch (DeploymentException ex) {
-//            System.out.println("we got a deployment exception");
             ex.printStackTrace();
             throw new ResponseException();
         } catch (URISyntaxException ex) {
-//            System.out.println("we got a uri syntax exception");
             ex.printStackTrace();
             throw new RuntimeException(ex);
         } catch (IOException ex) {
-//            System.out.println("we got an IO exception");
             ex.printStackTrace();
             throw new RuntimeException(ex);
         }
@@ -76,7 +69,6 @@ public class WebSocketFacade extends Endpoint {
     }
 
     public void makeMove(String authToken, int gameID, String ... params) throws InvalidMoveException, AuthorizationException {
-        //            System.out.println("we are in leaveGame of WebSocketFacade!");
         try {
             if (params[0].length() != 2 || params[1].length() != 2) {
                 throw new InvalidMovePositionsException();
@@ -96,30 +88,27 @@ public class WebSocketFacade extends Endpoint {
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (InvalidMovePositionsException ex) {
             throw new InvalidMovePositionsException();
-        } catch (InvalidMoveException e) {
-            throw new InvalidMoveException();
-//            return "Sorry that wasn't a valid move! Check the valid moves for that piece with the command \"highlight\" <PIECE POSITION>";
-//        } catch (AuthorizationException ex)  {
-//            throw new AuthorizationException();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        //            System.out.println("we sent the leaveGame command to the session!");
     }
 
     public void leaveGame(String authToken, int gameID) {
         try {
-//            System.out.println("we are in leaveGame of WebSocketFacade!");
             var command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameID, null);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
-//            System.out.println("we sent the leaveGame command to the session!");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void resignFromGame() {
-
+    public void resignFromGame(String authToken, int gameID) {
+        try {
+            var command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameID, null);
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void send(String message) throws IOException {
