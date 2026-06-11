@@ -121,7 +121,8 @@ public class GameClient implements ServerMessageHandler {
                 ws.makeMove(authToken, gameID, params);
                 return "";
             } catch (InvalidMovePositionsException ex) {
-                return SET_TEXT_COLOR_RED + "Error: One or both those positions aren't valid. Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
+                return SET_TEXT_COLOR_RED + "Error: One or both those positions aren't valid. " +
+                        "Valid positions must be inputted with the letter then the number. (e.g. a1 or F6)";
             } catch (InvalidMoveException e) {
                 return SET_TEXT_COLOR_RED + "Error: That move wasn't valid!";
             } catch (AuthorizationException e) {
@@ -311,7 +312,7 @@ public class GameClient implements ServerMessageHandler {
         return """
                 Options:
                 - Display the board again: "s", "show"
-                - Make a move: "m", "move" <START POSITION> <END POSITION> [QUEEN|ROOK|KNIGHT|BISHOP] (you only need to enter the piece for pawn promotion)
+                - Make a move: "m", "move" <START POSITION> <END POSITION> [QUEEN|ROOK|KNIGHT|BISHOP] (only enter piece for pawn promotion)
                 - Highlight legal moves: "t", "highlight" <PIECE POSITION>
                 - Resign from the game: "r", "resign"
                 - Leave the game: "l", "leave"

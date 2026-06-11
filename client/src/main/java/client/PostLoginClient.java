@@ -148,7 +148,8 @@ public class PostLoginClient {
                     if (blackPlayer == null) {
                         blackPlayer = "no one";
                     }
-                    listedGamesDisplay.append(String.format("%d. %s - White Player: %s, Black Player: %s \n", i, game.gameName(), whitePlayer, blackPlayer));
+                    listedGamesDisplay.append(String.format("%d. %s - White Player: %s, Black Player: %s \n",
+                            i, game.gameName(), whitePlayer, blackPlayer));
                     gameDataHashMap.put(i, game);
                     i++;
                 }

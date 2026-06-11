@@ -80,18 +80,19 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         connections.broadcastBack(session, gameMessage);
     }
 
-    private void makeMove(String authToken, int gameID, ChessMove req, Session session) throws IOException, DataAccessException, InvalidMoveException {
+    private void makeMove(String authToken, int gameID, ChessMove req, Session session)
+            throws IOException, DataAccessException, InvalidMoveException {
         try {
             AuthData auth = verifyAuth(authToken, session);
             GameData gameData = verifyGame(gameID, session);
             if (auth == null || gameData == null) {
                 return;
             }
-            ChessGame.TeamColor teamColor;
+            ChessGame.TeamColor color;
             if (Objects.equals(gameData.whiteUsername(), auth.username())) {
-                teamColor = ChessGame.TeamColor.BLACK;
+                color = ChessGame.TeamColor.BLACK;
             } else if (Objects.equals(gameData.blackUsername(), auth.username())) {
-                teamColor = ChessGame.TeamColor.WHITE;
+                color = ChessGame.TeamColor.WHITE;
             } else {
                 String message = "Error: You can't make a move as an observer! To play, join a game as the white or black player!";
                 connections.broadcastBack(session, new ErrorMessage(message));
@@ -104,13 +105,15 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 return;
             }
             ChessPiece piece = game.getBoard().getPiece(req.getStartPosition());
-            if (piece.getTeamColor() == teamColor) {
+            ChessPiece.PieceType type = piece.getPieceType();
+            if (piece.getTeamColor() == color) {
                 String message = "Error: Oops! You can't move your opponent's piece!";
                 connections.broadcastBack(session, new ErrorMessage(message));
                 return;
-            } else if ((teamColor == ChessGame.TeamColor.WHITE && piece.getPieceType() == ChessPiece.PieceType.PAWN && req.getEndPosition().getRow() == 1) ||
-                    (teamColor == ChessGame.TeamColor.BLACK && piece.getPieceType() == ChessPiece.PieceType.PAWN && req.getEndPosition().getRow() == 8)) {
-                String message = "Oops! Since that pawn is being moved to the end of the board, you must enter in the piece you want to promote it to (e.g. \"move e7 e8 QUEEN\")!";
+            } else if ((color == ChessGame.TeamColor.WHITE && type == ChessPiece.PieceType.PAWN && req.getEndPosition().getRow() == 1) ||
+                    (color == ChessGame.TeamColor.BLACK && type == ChessPiece.PieceType.PAWN && req.getEndPosition().getRow() == 8)) {
+                String message = "Oops! Since that pawn is being moved to the end of the board, " +
+                        "you must enter in the piece you want to promote it to (e.g. \"move e7 e8 QUEEN\")!";
                 connections.broadcastBack(session, new ErrorMessage(message));
                 return;
             }
@@ -132,18 +135,18 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             gameMessage = new LoadGameMessage(game);
             connections.broadcastBack(session, gameMessage);
             String enemyUsername = getEnemyUsername(gameData, auth.username());
-            if (game.isInCheckmate(teamColor)) {
+            if (game.isInCheckmate(color)) {
                 String checkmateBroadcastMessage = String.format("%s was put into checkmate! %s has won the game!", enemyUsername, auth.username());
                 String message = String.format("%s was put into checkmate! You won the game!", enemyUsername);
                 connections.broadcast(session, gameID, new NotificationMessage(checkmateBroadcastMessage));
                 connections.broadcastBack(session, new NotificationMessage(message));
                 game.endGame();
-            } else if (game.isInStalemate(teamColor)) {
+            } else if (game.isInStalemate(color)) {
                 String message = "Drats its a stalemate!";
                 connections.broadcast(session, gameID, new NotificationMessage(message));
                 connections.broadcastBack(session, new NotificationMessage(message));
                 game.endGame();
-            } else if (game.isInCheck(teamColor)) {
+            } else if (game.isInCheck(color)) {
                 String message = String.format("%s was put into check!", enemyUsername);
                 connections.broadcast(session, gameID, new NotificationMessage(message));
                 connections.broadcastBack(session, new NotificationMessage(message));
@@ -175,7 +178,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         }
     }
 
-    private void leave(String authToken, int gameID, /*String username, boolean isPlaying, String playerColor,*/ Session session) throws IOException, DataAccessException {
+    private void leave(String authToken, int gameID, Session session) throws IOException, DataAccessException {
         String message;
         AuthData auth = verifyAuth(authToken, session);
         GameData game = verifyGame(gameID, session);
